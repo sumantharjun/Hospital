@@ -5,6 +5,7 @@ import { JWT_SECRET } from "../../config";
 export interface AuthUser {
   sub: string;
   role: string;
+  labId: string;
 }
 
 declare module "express-serve-static-core" {
@@ -36,7 +37,9 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET, { ignoreExpiration: true }) as AuthUser;
+    const decoded = jwt.verify(token, JWT_SECRET) as AuthUser;
+    // labId: for LAB_ADMIN it equals their own sub; for operators it comes from the JWT labId field
+    decoded.labId = (decoded as any).labId ?? decoded.sub;
     req.user = decoded;
     next();
   } catch (error) {

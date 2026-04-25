@@ -82,7 +82,20 @@ router.post("/signup", async (req, res) => {
     if (department) userData.department = department;
     if (shiftEligibility) userData.shiftEligibility = shiftEligibility;
 
+    // Auto-assign labId: if a LAB_ADMIN is creating a LAB_OPERATOR, bind the operator to that lab
+    if (role === "LAB_OPERATOR" && (req as any).user?.role === "LAB_ADMIN") {
+      userData.labId = (req as any).user.sub;
+    }
+    if (role === "LAB_ADMIN") {
+      // LAB_ADMIN's labId is their own _id — set after creation below
+    }
+
     const user = await User.create(userData);
+
+    // For LAB_ADMIN, store their own _id as labId
+    if (role === "LAB_ADMIN") {
+      await User.findByIdAndUpdate(user._id, { labId: String(user._id) });
+    }
 
     // Emit activity for user creation
     await createActivity(
@@ -200,10 +213,17 @@ router.post("/login", async (req, res) => {
     }
   }
 
+  // LAB_ADMIN is their own lab; LAB_OPERATOR belongs to the lab set on their user record
+  const labId =
+    user.role === "LAB_ADMIN"
+      ? String(user._id)
+      : (user.labId ?? String(user._id));
+
   const token = jwt.sign(
     {
       sub: String(user._id),
       role: user.role,
+      labId,
     },
     JWT_SECRET,
     { expiresIn: "7d" }

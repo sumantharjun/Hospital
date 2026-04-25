@@ -9,7 +9,9 @@ export type UserRole =
   | "PATIENT"
   | "DELIVERY_AGENT"
   | "RECEPTIONIST"
-  | "NURSE";
+  | "NURSE"
+  | "LAB_ADMIN"
+  | "LAB_OPERATOR";
 
 /** Role within a pharmacy branch (for multi-login per branch) */
 export type PharmacyBranchRole = "PHARMACY_MANAGER" | "PHARMACY_CASHIER" | "PHARMACY_STAFF";
@@ -23,6 +25,7 @@ export interface IUser extends Document {
   hospitalId?: string;
   pharmacyId?: string;
   distributorId?: string;
+  labId?: string;
   status?: "AVAILABLE" | "BUSY" | "OFFLINE";
   currentOrderId?: string;
   isActive: boolean;
@@ -60,12 +63,13 @@ const UserSchema = new Schema<IUser>(
     passwordHash: { type: String, required: true },
     role: {
       type: String,
-      enum: ["SUPER_ADMIN", "HOSPITAL_ADMIN", "DOCTOR", "PHARMACY_STAFF", "DISTRIBUTOR", "PATIENT", "DELIVERY_AGENT", "RECEPTIONIST", "NURSE"],
+      enum: ["SUPER_ADMIN", "HOSPITAL_ADMIN", "DOCTOR", "PHARMACY_STAFF", "DISTRIBUTOR", "PATIENT", "DELIVERY_AGENT", "RECEPTIONIST", "NURSE", "LAB_ADMIN", "LAB_OPERATOR"],
       required: true,
     },
     hospitalId: { type: String },
     pharmacyId: { type: String },
     distributorId: { type: String },
+    labId: { type: String },
     status: {
       type: String,
       enum: ["AVAILABLE", "BUSY", "OFFLINE"],

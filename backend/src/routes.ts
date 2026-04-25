@@ -44,6 +44,14 @@ import { router as hospitalReportsRouter } from "./reports/hospitalReports.route
 import { router as vitalsRouter } from "./vitals/vitals.routes";
 import { router as medicationRouter } from "./medications/medication.routes";
 import { router as nurseAlertRouter } from "./nurseAlerts/nurseAlert.routes";
+import { router as labPatientRouter } from "./labPatient/labPatient.routes";
+import { router as labTestRouter } from "./labTest/labTest.routes";
+import { router as labPackageRouter } from "./labPackage/labPackage.routes";
+import { router as labOrderRouter } from "./labOrder/labOrder.routes";
+import { router as labResultRouter } from "./labResult/labResult.routes";
+import { router as labBillingRouter } from "./labBilling/labBilling.routes";
+import { router as labReportRouter } from "./labReport/labReport.routes";
+import { router as labSettingsRouter } from "./labSettings/labSettings.routes";
 
 export function registerRoutes(app: Express) {
   // Root route - API information
@@ -111,6 +119,16 @@ export function registerRoutes(app: Express) {
   app.use("/api/vitals", vitalsRouter);
   app.use("/api/medications", medicationRouter);
   app.use("/api/nurse/alerts", nurseAlertRouter);
+
+  // Lab System routes
+  app.use("/api/lab/patients", labPatientRouter);
+  app.use("/api/lab/tests", labTestRouter);
+  app.use("/api/lab/packages", labPackageRouter);
+  app.use("/api/lab/orders", labOrderRouter);
+  app.use("/api/lab/results", labResultRouter);
+  app.use("/api/lab/billing", labBillingRouter);
+  app.use("/api/lab/reports", labReportRouter);
+  app.use("/api/lab/settings", labSettingsRouter);
 
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok" });
