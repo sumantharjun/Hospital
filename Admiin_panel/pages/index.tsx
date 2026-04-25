@@ -65,24 +65,21 @@ export default function LoginPage() {
         throw new Error(data.message || "Login failed");
       }
       const data = await res.json();
-      
+
       // Check if user is admin/super admin
       const isAdmin = data.user.role === "SUPER_ADMIN" || data.user.role === "HOSPITAL_ADMIN";
-      
+
+      if (!isAdmin) {
+        throw new Error("Access denied. This portal is for administrators only.");
+      }
+
       if (typeof window !== "undefined") {
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
       }
-      
+
       toast.success("Login successful!");
-      
-      // Redirect based on role
-      if (isAdmin) {
-        router.push("/dashboard");
-      } else {
-        
-        router.push("/dashboard");
-      }
+      router.push("/dashboard");
     } catch (err: any) {
       setError(err.message);
       toast.error(err.message);

@@ -31,25 +31,25 @@ import {
 import { LoadingOverlay } from "./LoadingSpinner";
 
 const navItems = [
-  { path: "/reception/dashboard",          label: "Dashboard",          icon: DashboardIcon,       section: "Home",                description: "Overview & today's stats" },
-  { path: "/reception/token-queue",        label: "Token Queue",        icon: QueueIcon,           section: "Home",                description: "Live OPD queue & token display" },
-  { path: "/reception/search",             label: "Patient Search",     icon: SearchIcon,          section: "Home",                description: "Quick search across IP / OP / Services" },
-  { path: "/reception/doctors",            label: "Doctor Board",       icon: StethoscopeIcon,     section: "Home",                description: "Doctor availability & queue depth" },
-  { path: "/reception/beds",               label: "Bed Status",         icon: BedIcon,             section: "Home",                description: "Real-time bed availability" },
-  { path: "/reception/emergency",          label: "Emergency",          icon: AlertIcon,           section: "Home",                description: "Emergency quick intake & triage" },
-  { path: "/reception/patients",           label: "Patients",           icon: PatientsIcon,        section: "OPD & Patients",      description: "Register & search patients" },
-  { path: "/reception/appointments",       label: "Appointments",       icon: AppointmentsIcon,    section: "OPD & Patients",      description: "Book & manage appointments" },
-  { path: "/reception/history",            label: "Patient History",    icon: HistoryIcon,         section: "OPD & Patients",      description: "Visit history by patient" },
-  { path: "/reception/ip-registration",   label: "IP Admission",       icon: IPAdmissionIcon,     section: "IP / OP / Services",  description: "Register in-patient admission" },
-  { path: "/reception/op-registration",   label: "OP Registration",    icon: OPRegistrationIcon,  section: "IP / OP / Services",  description: "Register out-patient" },
-  { path: "/reception/services-registration", label: "Services Billing", icon: ServicesIcon,      section: "IP / OP / Services",  description: "Direct lab/procedure billing" },
-  { path: "/reception/service-billing",   label: "Service Bill View",  icon: ServiceBillIcon,     section: "IP / OP / Services",  description: "View & print service bills" },
-  { path: "/reception/ip-billing",        label: "IP Billing",         icon: IPBillingIcon,       section: "IP / OP / Services",  description: "View & manage IP bill" },
-  { path: "/reception/discharge",         label: "Discharge",          icon: DischargeIcon,       section: "IP / OP / Services",  description: "Manage patient discharge" },
-  { path: "/reception/revenue",           label: "Revenue & Invoices", icon: RevenueIcon,         section: "Finance",             description: "Total revenue, collections & invoices" },
-  { path: "/reception/reports",           label: "Reports",            icon: ReportsIcon,         section: "Finance",             description: "Daily & doctor-wise reports" },
-  { path: "/reception/prescriptions",     label: "Prescriptions",      icon: PrescriptionIcon,    section: "Finance",             description: "Doctor prescription view" },
-  { path: "/reception/handover",          label: "Shift Handover",     icon: ReportsIcon,         section: "Finance",             description: "End-of-shift summary & handover" },
+  { path: "/reception/dashboard",          label: "Dashboard",          icon: DashboardIcon,       section: "Home",           description: "Overview & today's stats" },
+  // { path: "/reception/token-queue",        label: "Token Queue",        icon: QueueIcon,           section: "Home",           description: "Live OPD queue & token display" },         // Not needed: hospital token system
+  { path: "/reception/search",             label: "Patient Search",     icon: SearchIcon,          section: "Home",           description: "Quick search across patients" },
+  // { path: "/reception/doctors",            label: "Doctor Board",       icon: StethoscopeIcon,     section: "Home",           description: "Doctor availability & queue depth" },       // Not needed: no doctor role in BRD
+  // { path: "/reception/beds",               label: "Bed Status",         icon: BedIcon,             section: "Home",           description: "Real-time bed availability" },              // Not needed: clinic is OP-only, no beds
+  // { path: "/reception/emergency",          label: "Emergency",          icon: AlertIcon,           section: "Home",           description: "Emergency quick intake & triage" },         // Not needed: out of scope
+  { path: "/reception/patients",           label: "Patients",           icon: PatientsIcon,        section: "OPD & Patients", description: "Register & search patients" },
+  { path: "/reception/appointments",       label: "Appointments",       icon: AppointmentsIcon,    section: "OPD & Patients", description: "Book & manage appointments" },
+  { path: "/reception/history",            label: "Patient History",    icon: HistoryIcon,         section: "OPD & Patients", description: "Visit history by patient" },
+  // { path: "/reception/ip-registration",   label: "IP Admission",       icon: IPAdmissionIcon,     section: "OP / Services",  description: "Register in-patient admission" },           // Not needed: clinic is OP-only
+  { path: "/reception/op-registration",   label: "OP Registration",    icon: OPRegistrationIcon,  section: "OP / Services",  description: "Register out-patient" },
+  { path: "/reception/services-registration", label: "Services Billing", icon: ServicesIcon,      section: "OP / Services",  description: "Procedure / treatment billing" },
+  { path: "/reception/service-billing",   label: "Service Bill View",  icon: ServiceBillIcon,     section: "OP / Services",  description: "View & print service bills" },
+  // { path: "/reception/ip-billing",        label: "IP Billing",         icon: IPBillingIcon,       section: "OP / Services",  description: "View & manage IP bill" },                   // Not needed: no inpatient billing
+  // { path: "/reception/discharge",         label: "Discharge",          icon: DischargeIcon,       section: "OP / Services",  description: "Manage patient discharge" },                // Not needed: no inpatient admissions
+  { path: "/reception/revenue",           label: "Revenue & Invoices", icon: RevenueIcon,         section: "Finance",        description: "Total revenue, collections & invoices" },
+  { path: "/reception/reports",           label: "Reports",            icon: ReportsIcon,         section: "Finance",        description: "Daily & revenue reports" },
+  { path: "/reception/prescriptions",     label: "Prescriptions",      icon: PrescriptionIcon,    section: "Finance",        description: "Prescription view & print" },
+  // { path: "/reception/handover",          label: "Shift Handover",     icon: ReportsIcon,         section: "Finance",        description: "End-of-shift summary & handover" },         // Not needed: nurse shift handover feature
 ];
 
 function getBreadcrumb(pathname, items) {

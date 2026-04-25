@@ -18,26 +18,26 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { path: "/dashboard",               label: "Overview",          icon: DashboardIcon,    section: "Home" },
-  { path: "/hospital-management",     label: "Hospitals",         icon: HospitalIcon,     section: "Management" },
-  { path: "/pharmacy-management",     label: "Pharmacies",        icon: PharmacyIcon,     section: "Management" },
-  { path: "/branch-stock",            label: "Branch Stock",      icon: PharmacyIcon,     section: "Management", superAdminOnly: true },
-  { path: "/distributor-management",  label: "Distributors",      icon: DistributorIcon,  section: "Management" },
-  { path: "/doctor-management",       label: "Doctors",           icon: DoctorIcon,       section: "Management" },
+  // { path: "/hospital-management",     label: "Hospitals",         icon: HospitalIcon,     section: "Management" },        // Not needed: no multi-hospital setup
+  // { path: "/pharmacy-management",     label: "Pharmacies",        icon: PharmacyIcon,     section: "Management" },        // Not needed: no external pharmacy panel
+  // { path: "/branch-stock",            label: "Branch Stock",      icon: PharmacyIcon,     section: "Management", superAdminOnly: true }, // Not needed: no multi-branch
+  // { path: "/distributor-management",  label: "Distributors",      icon: DistributorIcon,  section: "Management" },        // Not needed: no distributor role
+  // { path: "/doctor-management",       label: "Doctors",           icon: DoctorIcon,       section: "Management" },        // Not needed: no doctor role in BRD
   { path: "/receptionist-management", label: "Receptionists",     icon: ReceptionistIcon, section: "Management" },
-  { path: "/nurse-management",        label: "Nurses",            icon: PatientIcon,      section: "Management" },
-  { path: "/infrastructure",          label: "Rooms & Beds",      icon: HospitalIcon,     section: "Hospital" },
-  { path: "/hospital-config",         label: "Config & Services", icon: SettingsIcon,     section: "Hospital" },
-  { path: "/ip-management",           label: "IP Patients",       icon: PatientIcon,      section: "Hospital" },
-  { path: "/certificates",            label: "Certificates",      icon: ReportsIcon,      section: "Hospital" },
-  { path: "/vitals-monitor",          label: "Vitals Monitor",    icon: ActivityIcon,     section: "Hospital" },
-  { path: "/medications-overview",    label: "Medications",       icon: DoctorIcon,       section: "Hospital" },
-  { path: "/nurse-alerts",            label: "Nurse Alerts",      icon: BellIcon,         section: "Hospital" },
+  // { path: "/nurse-management",        label: "Nurses",            icon: PatientIcon,      section: "Management" },        // Not needed: no nurse role
+  // { path: "/infrastructure",          label: "Rooms & Beds",      icon: HospitalIcon,     section: "Hospital" },          // Not needed: no inpatient / bed management
+  // { path: "/hospital-config",         label: "Config & Services", icon: SettingsIcon,     section: "Hospital" },          // Not needed: hospital-specific config
+  // { path: "/ip-management",           label: "IP Patients",       icon: PatientIcon,      section: "Hospital" },          // Not needed: clinic is OP-only
+  // { path: "/certificates",            label: "Certificates",      icon: ReportsIcon,      section: "Hospital" },          // Not needed: hospital certificates
+  // { path: "/vitals-monitor",          label: "Vitals Monitor",    icon: ActivityIcon,     section: "Hospital" },          // Not needed: nurse/inpatient feature
+  // { path: "/medications-overview",    label: "Medications",       icon: DoctorIcon,       section: "Hospital" },          // Not needed: nurse medication tracking
+  // { path: "/nurse-alerts",            label: "Nurse Alerts",      icon: BellIcon,         section: "Hospital" },          // Not needed: no nurse role
   { path: "/schedules",               label: "Schedules",         icon: ClockIcon,        section: "Operations" },
   { path: "/patient-panel",           label: "Patients",          icon: PatientIcon,      section: "Operations" },
-  { path: "/orders",                  label: "Orders",            icon: OrdersIcon,       section: "Operations" },
-  { path: "/hospital-reports",        label: "Hospital Reports",  icon: ChartBarIcon,     section: "Reports" },
+  // { path: "/orders",                  label: "Orders",            icon: OrdersIcon,       section: "Operations" },        // Not needed: no distributor order flow
+  // { path: "/hospital-reports",        label: "Hospital Reports",  icon: ChartBarIcon,     section: "Reports" },           // Not needed: hospital-specific reports
   { path: "/patient-consolidated",    label: "Patient Summary",   icon: PatientIcon,      section: "Reports" },
-  { path: "/reports",                 label: "Pharmacy Reports",  icon: ReportsIcon,      section: "Reports" },
+  { path: "/reports",                 label: "Reports",           icon: ReportsIcon,      section: "Reports" },
   { path: "/templates",               label: "Templates",         icon: TemplatesIcon,    section: "Reports" },
   { path: "/activity-panel",          label: "Activity",          icon: ActivityIcon,     section: "Reports" },
   { path: "/finance",                 label: "Finance",           icon: FinanceIcon,      section: "Reports" },
