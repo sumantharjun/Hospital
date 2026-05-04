@@ -36,6 +36,7 @@ router.post("/init/:orderId", requireAuth, requireRole(LAB_ROLES), async (req, r
         value: "",
         normalMin: p.normalMin,
         normalMax: p.normalMax,
+        remarks: p.referenceText ?? "",
         isAbnormal: false,
       }));
 
@@ -92,12 +93,25 @@ router.patch("/:id/enter", requireAuth, requireRole(LAB_ROLES), async (req, res)
 
     result.parameterResults = processedParams;
     result.overallRemarks = overallRemarks;
-    result.status = "ENTERED";
+    result.status = "APPROVED";
     result.enteredBy = req.user!.sub;
     result.enteredAt = new Date();
+    result.approvedBy = req.user!.sub;
+    result.approvedAt = new Date();
     await result.save();
 
-    res.json({ message: "Result entered", result });
+    // Auto-complete order if all results are now approved
+    const order = await LabOrder.findOne({ _id: result.orderId, labId: req.user!.labId });
+    if (order && order.status === "IN_PROGRESS") {
+      const allResults = await LabResult.find({ orderId: order._id, labId: req.user!.labId });
+      const allApproved = allResults.length > 0 && allResults.every((r) => r.status === "APPROVED");
+      if (allApproved) {
+        order.status = "COMPLETED";
+        await order.save();
+      }
+    }
+
+    res.json({ message: "Result saved", result });
   } catch (error: any) {
     res.status(500).json({ message: "Failed to enter result", error: error.message });
   }

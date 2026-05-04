@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { requireAuth, requireRole } from "../shared/middleware/auth";
 import { LabTest } from "./labTest.model";
+import { LabPackage } from "../labPackage/labPackage.model";
 
 export const router = Router();
 
@@ -50,7 +51,6 @@ router.get("/", requireAuth, requireRole(LAB_ROLES), async (req, res) => {
     if (category) filter.category = category;
     if (search) filter.$text = { $search: String(search) };
 
-    console.log("[labTest] filter:", JSON.stringify(filter), "| user.sub:", req.user!.sub, "| user.labId:", req.user!.labId);
     const tests = await LabTest.find(filter).sort({ name: 1 });
     res.json({ tests });
   } catch (error: any) {
@@ -87,12 +87,16 @@ router.patch("/:id", requireAuth, requireRole(ADMIN_ONLY), async (req, res) => {
 // Delete (soft — disable)
 router.delete("/:id", requireAuth, requireRole(ADMIN_ONLY), async (req, res) => {
   try {
-    const test = await LabTest.findOneAndUpdate(
-      { _id: req.params.id, labId: req.user!.labId },
-      { isActive: false },
-      { new: true }
-    );
+    const test = await LabTest.findOne({ _id: req.params.id, labId: req.user!.labId });
     if (!test) return res.status(404).json({ message: "Test not found" });
+
+    const pkg = await LabPackage.findOne({ labId: req.user!.labId, tests: test._id });
+    if (pkg) {
+      return res.status(400).json({ message: `This test is part of the package "${pkg.name}". Please delete or update the package first before disabling this test.` });
+    }
+
+    test.isActive = false;
+    await test.save();
     res.json({ message: "Test disabled", test });
   } catch (error: any) {
     res.status(500).json({ message: "Failed to disable test", error: error.message });

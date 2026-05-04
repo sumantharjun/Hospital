@@ -12,6 +12,7 @@ export default function PatientsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [viewPatient, setViewPatient] = useState<LabPatient | null>(null);
 
   async function load(p = 1, q = "") {
     setLoading(true);
@@ -37,9 +38,6 @@ export default function PatientsPage() {
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Patients</h1>
-        <button onClick={() => router.push("/operator/patients/register")} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
-          + Register Patient
-        </button>
       </div>
 
       <form onSubmit={handleSearch} className="flex gap-2 mb-5">
@@ -64,15 +62,15 @@ export default function PatientsPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {patients.map((p) => (
-                <tr key={p._id} className="hover:bg-gray-50">
+                <tr key={p._id} className="hover:bg-gray-50 cursor-pointer" onClick={() => setViewPatient(p)}>
                   <td className="px-4 py-3 font-mono text-xs text-gray-500">{p.labPatientId}</td>
                   <td className="px-4 py-3 font-medium">{p.name}</td>
                   <td className="px-4 py-3 text-gray-500">{p.age} / {p.gender}</td>
                   <td className="px-4 py-3 text-gray-500">{p.phone}</td>
                   <td className="px-4 py-3 text-gray-400">{p.referredBy ?? "—"}</td>
                   <td className="px-4 py-3 text-right">₹{p.registrationCharge}</td>
-                  <td className="px-4 py-3 text-center">
-                    <button onClick={() => router.push(`/operator/orders/new?patientId=${p._id}`)} className="text-xs text-blue-600 hover:underline">New Order</button>
+                  <td className="px-4 py-3 text-center space-x-3">
+                    <button onClick={(e) => { e.stopPropagation(); router.push(`/operator/orders/new?patientId=${p._id}`); }} className="text-xs text-blue-600 hover:underline">New Order</button>
                   </td>
                 </tr>
               ))}
@@ -88,6 +86,57 @@ export default function PatientsPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* View Patient Modal */}
+      {viewPatient && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg p-6 relative">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Patient Details</h2>
+
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Patient ID</span>
+                <span className="font-mono text-xs">{viewPatient.labPatientId}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Name</span>
+                <span className="font-medium">{viewPatient.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Age / Gender</span>
+                <span>{viewPatient.age} / {viewPatient.gender}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Phone</span>
+                <span>{viewPatient.phone}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Email</span>
+                <span>{viewPatient.email ?? "—"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Blood Group</span>
+                <span>{viewPatient.bloodGroup ?? "—"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Referred By</span>
+                <span>{viewPatient.referredBy ?? "—"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Registration Charge</span>
+                <span>₹{viewPatient.registrationCharge}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Registered At</span>
+                <span className="text-xs">{new Date(viewPatient.createdAt).toLocaleString("en-IN")}</span>
+              </div>
+            </div>
+            <div className="flex justify-end mt-5">
+              <button onClick={() => setViewPatient(null)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Close</button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -4,6 +4,8 @@ import { LabOrder } from "./labOrder.model";
 import { LabPatient } from "../labPatient/labPatient.model";
 import { LabTest } from "../labTest/labTest.model";
 import { LabPackage } from "../labPackage/labPackage.model";
+import { LabBill } from "../labBilling/labBilling.model";
+import { LabSettings } from "../labSettings/labSettings.model";
 
 export const router = Router();
 
@@ -94,6 +96,43 @@ router.post("/", requireAuth, requireRole(LAB_ROLES), async (req, res) => {
       createdBy: req.user!.sub,
     });
 
+    // Auto-generate bill
+    try {
+      const settings = await LabSettings.findOne({ labId });
+      const registrationCharge = settings?.registrationCharge ?? 0;
+
+      const lineItems: any[] = [
+        ...tests.map((t) => ({ description: t.testName, quantity: 1, unitPrice: t.price, taxPercent: 0, taxAmount: 0, total: t.price })),
+        ...packages.map((p) => ({ description: p.packageName, quantity: 1, unitPrice: p.price, taxPercent: 0, taxAmount: 0, total: p.price })),
+        ...(registrationCharge > 0 ? [{ description: "Registration Charge", quantity: 1, unitPrice: registrationCharge, taxPercent: 0, taxAmount: 0, total: registrationCharge }] : []),
+      ];
+
+      const billSubtotal = lineItems.reduce((s, i) => s + i.total, 0);
+      const billGrandTotal = billSubtotal + taxTotal - discountAmount;
+
+      const bill = await LabBill.create({
+        billNumber: `LB-${Date.now().toString(36).toUpperCase()}`,
+        labId,
+        orderId: order._id,
+        patientId: patient._id,
+        patientName: patient.name,
+        patientPhone: patient.phone,
+        lineItems,
+        registrationCharge,
+        subtotal: billSubtotal,
+        taxTotal,
+        discountPercent: disc,
+        discountAmount,
+        grandTotal: billGrandTotal,
+        outstandingBalance: billGrandTotal,
+        notes,
+        createdBy: req.user!.sub,
+      });
+
+      await LabOrder.findOneAndUpdate({ _id: order._id, labId }, { billId: bill._id });
+      order.billId = bill._id as any;
+    } catch (_) {}
+
     res.status(201).json({ message: "Order created", order });
   } catch (error: any) {
     res.status(500).json({ message: "Failed to create order", error: error.message });
@@ -149,7 +188,7 @@ router.patch("/:id/sample", requireAuth, requireRole(LAB_ROLES), async (req, res
         sampleId: generateSampleId(),
         sampleCollectedAt: new Date(),
         sampleCollectedBy: collectedBy || req.user!.sub,
-        status: "COLLECTED",
+        status: "IN_PROGRESS",
       },
       { new: true }
     );
@@ -167,7 +206,7 @@ router.patch("/:id/status", requireAuth, requireRole(LAB_ROLES), async (req, res
     const validTransitions: Record<string, string[]> = {
       PENDING: ["COLLECTED", "CANCELLED"],
       COLLECTED: ["IN_PROGRESS", "CANCELLED"],
-      IN_PROGRESS: ["COMPLETED", "CANCELLED"],
+      IN_PROGRESS: ["CANCELLED"],
     };
 
     // Fetch and validate in one scoped query

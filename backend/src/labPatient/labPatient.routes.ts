@@ -13,6 +13,63 @@ function generateLabPatientId(): string {
   return `LP-${ts}-${rand}`;
 }
 
+// Find or create patient (dedup by labId + name + phone)
+router.post("/find-or-create", requireAuth, requireRole(LAB_ROLES), async (req, res) => {
+  try {
+    const { name, phone, age, gender, dob, email, bloodGroup, referredBy, address } = req.body;
+    const labId = req.user!.labId;
+
+    if (!name || !phone || !age || !gender) {
+      return res.status(400).json({ message: "name, phone, age, gender are required" });
+    }
+    if (!["MALE", "FEMALE", "OTHER"].includes(gender)) {
+      return res.status(400).json({ message: "gender must be MALE, FEMALE, or OTHER" });
+    }
+    if (Number(age) <= 0 || Number(age) > 150) {
+      return res.status(400).json({ message: "age must be between 1 and 150" });
+    }
+
+    const escapedName = name.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const existing = await LabPatient.findOne({
+      labId,
+      name: new RegExp("^" + escapedName + "$", "i"),
+      phone: phone.trim(),
+    });
+
+    if (existing) {
+      return res.json({ patient: existing, created: false });
+    }
+
+    let registrationCharge = 0;
+    try {
+      const settings = await LabSettings.findOne({ labId });
+      if (settings) registrationCharge = settings.registrationCharge ?? 0;
+    } catch (e) {
+      console.error("Failed to fetch lab settings for registration charge:", e);
+    }
+
+    const patient = await LabPatient.create({
+      labPatientId: generateLabPatientId(),
+      labId,
+      name: name.trim(),
+      age: Number(age),
+      gender,
+      dob,
+      phone: phone.trim(),
+      email,
+      address,
+      bloodGroup,
+      referredBy,
+      registrationCharge,
+      createdBy: req.user!.sub,
+    });
+
+    res.status(201).json({ patient, created: true });
+  } catch (error: any) {
+    res.status(500).json({ message: "Failed to find or create patient", error: error.message });
+  }
+});
+
 // Register new patient
 router.post("/", requireAuth, requireRole(LAB_ROLES), async (req, res) => {
   try {

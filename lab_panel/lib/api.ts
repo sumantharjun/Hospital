@@ -34,20 +34,19 @@ export function apiDelete<T>(path: string): Promise<T> {
   return fetch(`${BASE}${path}`, { method: "DELETE", headers: authHeaders() }).then((r) => handleResponse<T>(r));
 }
 
-export function apiDownloadPdf(path: string): void {
+export async function apiDownloadPdf(path: string): Promise<void> {
   const token = getToken();
   const url = `${BASE}${path}`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ message: res.statusText }));
+    throw new Error(body.message ?? "Failed to generate report");
+  }
+  const blob = await res.blob();
+  const objUrl = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url;
-  a.target = "_blank";
-  // Fetch as blob to include auth header
-  fetch(url, { headers: { Authorization: `Bearer ${token}` } })
-    .then((r) => r.blob())
-    .then((blob) => {
-      const objUrl = URL.createObjectURL(blob);
-      a.href = objUrl;
-      a.download = "report.pdf";
-      a.click();
-      URL.revokeObjectURL(objUrl);
-    });
+  a.href = objUrl;
+  a.download = `report-${Date.now()}.pdf`;
+  a.click();
+  URL.revokeObjectURL(objUrl);
 }

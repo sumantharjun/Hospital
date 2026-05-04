@@ -13,6 +13,7 @@ export default function PackagesPage() {
   const [form, setForm] = useState({ name: "", description: "", price: 0, discountPercent: 0, taxPercent: 0 });
   const [selectedTests, setSelectedTests] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [viewPkg, setViewPkg] = useState<LabPackage | null>(null);
 
   async function load() {
     try {
@@ -77,7 +78,7 @@ export default function PackagesPage() {
       {loading ? <div className="text-gray-400 text-center py-10">Loading…</div> : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {packages.map((p) => (
-            <div key={p._id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+            <div key={p._id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 cursor-pointer" onClick={() => setViewPkg(p)}>
               <div className="flex items-start justify-between mb-2">
                 <h3 className="font-semibold text-gray-900">{p.name}</h3>
                 <span className={`px-2 py-0.5 rounded-full text-xs ${p.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
@@ -94,8 +95,8 @@ export default function PackagesPage() {
                   {p.originalPrice > p.price && <span className="text-xs text-gray-400 line-through ml-2">₹{p.originalPrice}</span>}
                 </div>
                 <div className="flex gap-2 text-xs">
-                  <button onClick={() => openEdit(p)} className="text-blue-600 hover:underline">Edit</button>
-                  <button onClick={() => toggleActive(p)} className={p.isActive ? "text-red-500 hover:underline" : "text-green-600 hover:underline"}>
+                  <button onClick={(e) => { e.stopPropagation(); openEdit(p); }} className="text-blue-600 hover:underline">Edit</button>
+                  <button onClick={(e) => { e.stopPropagation(); toggleActive(p); }} className={p.isActive ? "text-red-500 hover:underline" : "text-green-600 hover:underline"}>
                     {p.isActive ? "Disable" : "Enable"}
                   </button>
                 </div>
@@ -106,18 +107,102 @@ export default function PackagesPage() {
         </div>
       )}
 
+      {/* View Modal */}
+      {viewPkg && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 relative">
+            <h2 className="text-lg font-bold mb-4">{viewPkg.name}</h2>
+            {viewPkg.description && <p className="text-sm text-gray-500 mb-4">{viewPkg.description}</p>}
+            <div className="grid grid-cols-2 gap-3 text-sm mb-5">
+              <div><span className="text-gray-500">Price:</span> <span className="font-medium text-blue-600">₹{viewPkg.price}</span></div>
+              {viewPkg.originalPrice > viewPkg.price && (
+                <div><span className="text-gray-500">Original Price:</span> <span className="font-medium line-through text-gray-400">₹{viewPkg.originalPrice}</span></div>
+              )}
+              <div><span className="text-gray-500">Discount:</span> <span className="font-medium">{viewPkg.discountPercent}%</span></div>
+              <div><span className="text-gray-500">Tax:</span> <span className="font-medium">{viewPkg.taxPercent}%</span></div>
+              <div>
+                <span className="text-gray-500">Status:</span>{" "}
+                <span className={`px-2 py-0.5 rounded-full text-xs ${viewPkg.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
+                  {viewPkg.isActive ? "Active" : "Disabled"}
+                </span>
+              </div>
+            </div>
+            <h3 className="font-semibold text-sm mb-2">Included Tests</h3>
+            <ul className="space-y-1">
+              {viewPkg.tests.map((t) => (
+                <li key={t._id} className="flex items-center justify-between text-sm border border-gray-100 rounded-lg px-3 py-2">
+                  <div>
+                    <span className="font-medium">{t.name}</span>
+                    <span className="text-xs text-gray-400 ml-2">{t.category}</span>
+                  </div>
+                  <span className="text-blue-600 font-medium">₹{t.price}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="flex justify-end mt-5">
+              <button onClick={() => setViewPkg(null)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6">
             <h2 className="text-lg font-bold mb-4">{editing ? "Edit Package" : "Add Package"}</h2>
             <div className="space-y-3">
-              {[["name", "Package Name", "text"], ["description", "Description", "text"], ["price", "Price (₹)", "number"], ["discountPercent", "Discount %", "number"], ["taxPercent", "Tax %", "number"]].map(([k, label, type]) => (
-                <div key={k}>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
-                  <input type={type as string} value={(form as any)[k as string]} onChange={(e) => setForm((f) => ({ ...f, [k as string]: type === "number" ? Number(e.target.value) : e.target.value }))}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-              ))}
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Package Name</label>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Description</label>
+                <input
+                  type="text"
+                  value={form.description}
+                  onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Price (₹)</label>
+                <input
+                  type="number"
+                  value={form.price}
+                  min={0}
+                  onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                  onChange={(e) => setForm((f) => ({ ...f, price: Math.max(0, Number(e.target.value)) }))}
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Discount %</label>
+                <input
+                  type="number"
+                  value={form.discountPercent}
+                  min={0}
+                  max={100}
+                  onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                  onChange={(e) => setForm((f) => ({ ...f, discountPercent: Math.min(100, Math.max(0, Number(e.target.value))) }))}
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Tax %</label>
+                <input
+                  type="number"
+                  value={form.taxPercent}
+                  min={0}
+                  onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                  onChange={(e) => setForm((f) => ({ ...f, taxPercent: Math.max(0, Number(e.target.value)) }))}
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-2">Select Tests</label>
                 <div className="border rounded-lg p-3 max-h-40 overflow-y-auto space-y-1">

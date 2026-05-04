@@ -27,6 +27,7 @@ export interface ILabTest extends Document {
   description?: string;
   sampleType: string;
   parameters: ITestParameter[];
+  defaultInterpretation?: string;
   price: number;
   taxPercent: number;
   turnAroundTimeHours: number;
@@ -61,6 +62,7 @@ const LabTestSchema = new Schema<ILabTest>(
     description: { type: String },
     sampleType: { type: String, required: true },
     parameters: [TestParameterSchema],
+    defaultInterpretation: { type: String },
     price: { type: Number, required: true, default: 0 },
     taxPercent: { type: Number, default: 0 },
     turnAroundTimeHours: { type: Number, default: 24 },

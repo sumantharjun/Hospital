@@ -15,6 +15,7 @@ export default function ReportsPage() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [loading, setLoading] = useState(false);
+  const [viewBill, setViewBill] = useState<LabBill | null>(null);
 
   async function load() {
     setLoading(true);
@@ -36,14 +37,32 @@ export default function ReportsPage() {
 
   const outstanding = bills.filter((b) => b.status === "PARTIAL" || b.status === "ACTIVE");
   const paid = bills.filter((b) => b.status === "PAID");
+  const today = new Date().toISOString().split("T")[0];
 
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Reports & Analytics</h1>
 
       <div className="flex gap-3 mb-6">
-        <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input
+          type="date"
+          value={from}
+          max={today}
+          onChange={(e) => {
+            const newFrom = e.target.value;
+            setFrom(newFrom);
+            if (to && to < newFrom) setTo(newFrom);
+          }}
+          className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <input
+          type="date"
+          value={to}
+          max={today}
+          min={from || undefined}
+          onChange={(e) => setTo(e.target.value)}
+          className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
         <button onClick={load} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">Apply</button>
       </div>
 
@@ -90,7 +109,7 @@ export default function ReportsPage() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {outstanding.map((b) => (
-                  <tr key={b._id} className="hover:bg-gray-50">
+                  <tr key={b._id} className="hover:bg-gray-50 cursor-pointer" onClick={() => setViewBill(b)}>
                     <td className="px-4 py-3 font-mono text-xs">{b.billNumber}</td>
                     <td className="px-4 py-3">{b.patientName}</td>
                     <td className="px-4 py-3 text-right">₹{b.grandTotal.toLocaleString("en-IN")}</td>
@@ -106,6 +125,45 @@ export default function ReportsPage() {
             </table>
           </div>
         </>
+      )}
+
+      {viewBill && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg p-6 relative max-h-[90vh] overflow-y-auto">
+            <h2 className="text-lg font-bold mb-4">Bill Details</h2>
+            <div className="space-y-3 text-sm mb-4">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Bill Number</span>
+                <span className="font-mono text-xs">{viewBill.billNumber}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Patient</span>
+                <span className="font-medium">{viewBill.patientName}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">Status</span>
+                <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">{viewBill.status}</span>
+              </div>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-3 space-y-1.5 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Grand Total</span>
+                <span className="font-semibold">₹{viewBill.grandTotal.toLocaleString("en-IN")}</span>
+              </div>
+              <div className="flex justify-between text-green-600">
+                <span>Paid</span>
+                <span>₹{viewBill.paidAmount.toLocaleString("en-IN")}</span>
+              </div>
+              <div className="flex justify-between font-medium text-red-500">
+                <span>Outstanding</span>
+                <span>₹{viewBill.outstandingBalance.toLocaleString("en-IN")}</span>
+              </div>
+            </div>
+            <div className="flex justify-end mt-5">
+              <button onClick={() => setViewBill(null)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Close</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

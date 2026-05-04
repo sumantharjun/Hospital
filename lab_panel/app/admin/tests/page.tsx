@@ -17,6 +17,7 @@ export default function TestsPage() {
   const [form, setForm] = useState<typeof emptyTest>(emptyTest);
   const [params, setParams] = useState<TestParameter[]>([]);
   const [saving, setSaving] = useState(false);
+  const [viewTest, setViewTest] = useState<LabTest | null>(null);
 
   async function load() {
     try {
@@ -102,7 +103,7 @@ export default function TestsPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {tests.map((t) => (
-                <tr key={t._id} className="hover:bg-gray-50">
+                <tr key={t._id} className="hover:bg-gray-50 cursor-pointer" onClick={() => setViewTest(t)}>
                   <td className="px-4 py-3 font-medium">{t.name}</td>
                   <td className="px-4 py-3 text-gray-500">{t.code}</td>
                   <td className="px-4 py-3 text-gray-500">{t.category}</td>
@@ -114,8 +115,8 @@ export default function TestsPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-center space-x-2">
-                    <button onClick={() => openEdit(t)} className="text-blue-600 hover:underline text-xs">Edit</button>
-                    <button onClick={() => toggleActive(t)} className={`text-xs ${t.isActive ? "text-red-500" : "text-green-600"} hover:underline`}>
+                    <button onClick={(e) => { e.stopPropagation(); openEdit(t); }} className="text-blue-600 hover:underline text-xs">Edit</button>
+                    <button onClick={(e) => { e.stopPropagation(); toggleActive(t); }} className={`text-xs ${t.isActive ? "text-red-500" : "text-green-600"} hover:underline`}>
                       {t.isActive ? "Disable" : "Enable"}
                     </button>
                   </td>
@@ -124,6 +125,67 @@ export default function TestsPage() {
               {tests.length === 0 && <tr><td colSpan={7} className="text-center py-8 text-gray-400">No tests yet</td></tr>}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* View Modal */}
+      {viewTest && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 relative">
+            <h2 className="text-lg font-bold mb-4">{viewTest.name}</h2>
+            <div className="grid grid-cols-2 gap-3 text-sm mb-5">
+              <div><span className="text-gray-500">Code:</span> <span className="font-medium">{viewTest.code}</span></div>
+              <div><span className="text-gray-500">Category:</span> <span className="font-medium">{viewTest.category}</span></div>
+              <div><span className="text-gray-500">Sample Type:</span> <span className="font-medium">{viewTest.sampleType}</span></div>
+              <div><span className="text-gray-500">Price:</span> <span className="font-medium">₹{viewTest.price}</span></div>
+              <div><span className="text-gray-500">Tax:</span> <span className="font-medium">{viewTest.taxPercent}%</span></div>
+              <div><span className="text-gray-500">TAT:</span> <span className="font-medium">{viewTest.turnAroundTimeHours} hrs</span></div>
+              <div>
+                <span className="text-gray-500">Status:</span>{" "}
+                <span className={`px-2 py-0.5 rounded-full text-xs ${viewTest.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
+                  {viewTest.isActive ? "Active" : "Disabled"}
+                </span>
+              </div>
+            </div>
+            {viewTest.parameters.length > 0 && (
+              <>
+                <h3 className="font-semibold text-sm mb-2">Parameters</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs border border-gray-100 rounded-lg overflow-hidden">
+                    <thead className="bg-gray-50 text-gray-600">
+                      <tr>
+                        <th className="text-left px-3 py-2 font-medium">Name</th>
+                        <th className="text-left px-3 py-2 font-medium">Unit</th>
+                        <th className="text-left px-3 py-2 font-medium">Normal Range</th>
+                        <th className="text-left px-3 py-2 font-medium">Reference Text</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {viewTest.parameters.map((p, i) => (
+                        <tr key={i} className="hover:bg-gray-50">
+                          <td className="px-3 py-2 font-medium">{p.name}</td>
+                          <td className="px-3 py-2 text-gray-500">{p.unit}</td>
+                          <td className="px-3 py-2 text-gray-500">
+                            {p.normalMin !== undefined && p.normalMax !== undefined
+                              ? `${p.normalMin} – ${p.normalMax}`
+                              : p.normalMin !== undefined
+                              ? `≥ ${p.normalMin}`
+                              : p.normalMax !== undefined
+                              ? `≤ ${p.normalMax}`
+                              : "—"}
+                          </td>
+                          <td className="px-3 py-2 text-gray-500">{p.referenceText || "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+            <div className="flex justify-end mt-5">
+              <button onClick={() => setViewTest(null)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Close</button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -138,8 +200,14 @@ export default function TestsPage() {
               ] as [keyof typeof form, string, string][]).map(([k, label, type]) => (
                 <div key={k}>
                   <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
-                  <input type={type} value={(form as any)[k]} onChange={(e) => setForm((f) => ({ ...f, [k]: type === "number" ? Number(e.target.value) : e.target.value }))}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input
+                    type={type}
+                    value={(form as any)[k]}
+                    min={type === "number" ? 0 : undefined}
+                    onWheel={type === "number" ? (e) => (e.target as HTMLInputElement).blur() : undefined}
+                    onChange={(e) => setForm((f) => ({ ...f, [k]: type === "number" ? Number(e.target.value) : e.target.value }))}
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
                 </div>
               ))}
               <div>
@@ -163,16 +231,39 @@ export default function TestsPage() {
               </div>
               <div className="space-y-2">
                 {params.map((p, i) => (
-                  <div key={i} className="border rounded-lg p-3 grid grid-cols-5 gap-2">
-                    {(["name", "unit"] as const).map((k) => (
-                      <input key={k} placeholder={k} value={p[k]} onChange={(e) => updateParam(i, k, e.target.value)}
-                        className="border rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                    ))}
-                    <input type="number" placeholder="Min" value={p.normalMin ?? ""} onChange={(e) => updateParam(i, "normalMin", e.target.value ? Number(e.target.value) : undefined)}
-                      className="border rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                    <input type="number" placeholder="Max" value={p.normalMax ?? ""} onChange={(e) => updateParam(i, "normalMax", e.target.value ? Number(e.target.value) : undefined)}
-                      className="border rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                    <button onClick={() => removeParam(i)} className="text-red-500 text-xs hover:underline">Remove</button>
+                  <div key={i} className="border rounded-lg p-3 space-y-2">
+                    <div className="grid grid-cols-5 gap-2">
+                      {(["name", "unit"] as const).map((k) => (
+                        <input key={k} placeholder={k} value={p[k]} onChange={(e) => updateParam(i, k, e.target.value)}
+                          className="border rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                      ))}
+                      <input
+                        type="number"
+                        placeholder="Min"
+                        value={p.normalMin ?? ""}
+                        min={0}
+                        onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                        onChange={(e) => updateParam(i, "normalMin", e.target.value ? Number(e.target.value) : undefined)}
+                        className="border rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                      <input
+                        type="number"
+                        placeholder="Max"
+                        value={p.normalMax ?? ""}
+                        min={0}
+                        onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                        onChange={(e) => updateParam(i, "normalMax", e.target.value ? Number(e.target.value) : undefined)}
+                        className="border rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                      <button onClick={() => removeParam(i)} className="text-red-500 text-xs hover:underline">Remove</button>
+                    </div>
+                    <textarea
+                      placeholder={"Reference Text — enter detailed ranges here (supports multiple lines)\ne.g.  80–200 : Adults\n       60–180 : Children"}
+                      value={p.referenceText ?? ""}
+                      rows={2}
+                      onChange={(e) => updateParam(i, "referenceText", e.target.value)}
+                      className="w-full border rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 resize-y font-mono"
+                    />
                   </div>
                 ))}
               </div>

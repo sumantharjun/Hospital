@@ -1,19 +1,20 @@
 "use client";
 import { useEffect, useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { apiGet, apiPost } from "@/lib/api";
 import type { LabTest, LabPackage, LabPatient } from "@/lib/types";
 import toast from "react-hot-toast";
 
+const today = new Date().toISOString().split("T")[0];
+
+const emptyPatient = { name: "", phone: "", age: "", gender: "MALE", dob: "", email: "", bloodGroup: "", referredBy: "", address: "" };
+
 function NewOrderForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const prePatientId = searchParams.get("patientId") ?? "";
 
-  const [patients, setPatients] = useState<LabPatient[]>([]);
   const [tests, setTests] = useState<LabTest[]>([]);
   const [packages, setPackages] = useState<LabPackage[]>([]);
-  const [patientId, setPatientId] = useState(prePatientId);
+  const [patient, setPatient] = useState<typeof emptyPatient>(emptyPatient);
   const [selectedTests, setSelectedTests] = useState<string[]>([]);
   const [selectedPackages, setSelectedPackages] = useState<string[]>([]);
   const [discountPercent, setDiscountPercent] = useState(0);
@@ -23,11 +24,9 @@ function NewOrderForm() {
 
   useEffect(() => {
     Promise.all([
-      apiGet<{ patients: LabPatient[] }>("/api/lab/patients?limit=200"),
       apiGet<{ tests: LabTest[] }>("/api/lab/tests?activeOnly=true"),
       apiGet<{ packages: LabPackage[] }>("/api/lab/packages?activeOnly=true"),
-    ]).then(([pd, td, pkd]) => {
-      setPatients(pd.patients);
+    ]).then(([td, pkd]) => {
       setTests(td.tests);
       setPackages(pkd.packages);
     }).catch((err) => toast.error(err.message))
@@ -44,13 +43,41 @@ function NewOrderForm() {
   const grandTotal = subtotal - discountAmount;
 
   async function submit() {
-    if (!patientId) { toast.error("Please select a patient"); return; }
+    if (!patient.name.trim()) { toast.error("Patient name is required"); return; }
+    if (!patient.phone.trim()) { toast.error("Patient phone is required"); return; }
+    if (!patient.age || Number(patient.age) <= 0) { toast.error("Valid age is required"); return; }
+    if (patient.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(patient.email)) { toast.error("Invalid email address"); return; }
     if (selectedTests.length === 0 && selectedPackages.length === 0) { toast.error("Select at least one test or package"); return; }
+
     setSaving(true);
     try {
-      const d = await apiPost<{ order: { _id: string } }>("/api/lab/orders", {
-        patientId, testIds: selectedTests, packageIds: selectedPackages, discountPercent, notes,
+      const patientPayload: Record<string, any> = {
+        name: patient.name.trim(),
+        phone: patient.phone.trim(),
+        age: Number(patient.age),
+        gender: patient.gender,
+      };
+      if (patient.dob) patientPayload.dob = patient.dob;
+      if (patient.email) patientPayload.email = patient.email.trim();
+      if (patient.bloodGroup) patientPayload.bloodGroup = patient.bloodGroup;
+      if (patient.referredBy) patientPayload.referredBy = patient.referredBy.trim();
+      if (patient.address) patientPayload.address = patient.address.trim();
+
+      const { patient: savedPatient, created } = await apiPost<{ patient: LabPatient; created: boolean }>(
+        "/api/lab/patients/find-or-create",
+        patientPayload
+      );
+
+      if (!created) toast.success(`Existing patient found: ${savedPatient.name}`);
+
+      await apiPost("/api/lab/orders", {
+        patientId: savedPatient._id,
+        testIds: selectedTests,
+        packageIds: selectedPackages,
+        discountPercent,
+        notes,
       });
+
       toast.success("Order created");
       router.push("/operator/orders");
     } catch (err: any) { toast.error(err.message); }
@@ -69,14 +96,108 @@ function NewOrderForm() {
       </div>
 
       <div className="space-y-5">
-        {/* Patient */}
+        {/* Patient Info */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <h2 className="font-semibold mb-3">Select Patient</h2>
-          <select value={patientId} onChange={(e) => setPatientId(e.target.value)}
-            className="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="">— Choose patient —</option>
-            {patients.map((p) => <option key={p._id} value={p._id}>{p.name} · {p.phone} · {p.labPatientId}</option>)}
-          </select>
+          <h2 className="font-semibold mb-4">Patient Information</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Full Name <span className="text-red-500">*</span></label>
+              <input
+                type="text"
+                value={patient.name}
+                onChange={(e) => setPatient((p) => ({ ...p, name: e.target.value }))}
+                placeholder="Patient full name"
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Phone <span className="text-red-500">*</span></label>
+              <input
+                type="tel"
+                value={patient.phone}
+                onChange={(e) => setPatient((p) => ({ ...p, phone: e.target.value }))}
+                placeholder="10-digit mobile number"
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Age <span className="text-red-500">*</span></label>
+              <input
+                type="number"
+                value={patient.age}
+                min={0}
+                max={150}
+                onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                onChange={(e) => setPatient((p) => ({ ...p, age: e.target.value }))}
+                placeholder="Age in years"
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Gender <span className="text-red-500">*</span></label>
+              <select
+                value={patient.gender}
+                onChange={(e) => setPatient((p) => ({ ...p, gender: e.target.value }))}
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="MALE">Male</option>
+                <option value="FEMALE">Female</option>
+                <option value="OTHER">Other</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Date of Birth</label>
+              <input
+                type="date"
+                value={patient.dob}
+                max={today}
+                onChange={(e) => setPatient((p) => ({ ...p, dob: e.target.value }))}
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
+              <input
+                type="email"
+                value={patient.email}
+                onChange={(e) => setPatient((p) => ({ ...p, email: e.target.value }))}
+                placeholder="optional"
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Blood Group</label>
+              <select
+                value={patient.bloodGroup}
+                onChange={(e) => setPatient((p) => ({ ...p, bloodGroup: e.target.value }))}
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">— Select —</option>
+                {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((g) => <option key={g}>{g}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Referred By</label>
+              <input
+                type="text"
+                value={patient.referredBy}
+                onChange={(e) => setPatient((p) => ({ ...p, referredBy: e.target.value }))}
+                placeholder="Doctor / clinic name"
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-medium text-gray-600 mb-1">Address</label>
+              <input
+                type="text"
+                value={patient.address}
+                onChange={(e) => setPatient((p) => ({ ...p, address: e.target.value }))}
+                placeholder="optional"
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          <p className="text-xs text-gray-400 mt-3">If a patient with the same name and phone already exists, the existing record will be used.</p>
         </div>
 
         {/* Tests */}
@@ -93,6 +214,7 @@ function NewOrderForm() {
                 <span className="text-sm font-semibold text-blue-700 flex-shrink-0">₹{t.price}</span>
               </label>
             ))}
+            {tests.length === 0 && <div className="col-span-2 text-sm text-gray-400">No active tests</div>}
           </div>
         </div>
 
@@ -100,15 +222,22 @@ function NewOrderForm() {
         {packages.length > 0 && (
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
             <h2 className="font-semibold mb-3">Packages</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="space-y-2">
               {packages.map((p) => (
-                <label key={p._id} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedPackages.includes(p._id) ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:bg-gray-50"}`}>
-                  <input type="checkbox" checked={selectedPackages.includes(p._id)} onChange={() => togglePkg(p._id)} className="rounded accent-blue-600" />
+                <label key={p._id} className={`flex gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedPackages.includes(p._id) ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:bg-gray-50"}`}>
+                  <input type="checkbox" checked={selectedPackages.includes(p._id)} onChange={() => togglePkg(p._id)} className="rounded accent-blue-600 mt-0.5" />
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate">{p.name}</div>
-                    <div className="text-xs text-gray-400">{p.tests.length} tests</div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">{p.name}</span>
+                      <span className="text-sm font-semibold text-blue-700 ml-3 flex-shrink-0">₹{p.price}</span>
+                    </div>
+                    {p.description && <div className="text-xs text-gray-400 mt-0.5">{p.description}</div>}
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {p.tests.map((t) => (
+                        <span key={t._id} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{t.name}</span>
+                      ))}
+                    </div>
                   </div>
-                  <span className="text-sm font-semibold text-blue-700 flex-shrink-0">₹{p.price}</span>
                 </label>
               ))}
             </div>
@@ -122,8 +251,15 @@ function NewOrderForm() {
             <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>₹{subtotal.toLocaleString("en-IN")}</span></div>
             <div className="flex items-center gap-3">
               <span className="text-gray-500">Discount %</span>
-              <input type="number" min={0} max={100} value={discountPercent} onChange={(e) => setDiscountPercent(Number(e.target.value))}
-                className="w-20 border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" />
+              <input
+                type="number"
+                min={0}
+                max={100}
+                value={discountPercent}
+                onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                onChange={(e) => setDiscountPercent(Math.min(100, Math.max(0, Number(e.target.value))))}
+                className="w-20 border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
               <span className="text-red-500">-₹{discountAmount}</span>
             </div>
             <div className="flex justify-between font-bold text-base pt-1 border-t border-gray-100">

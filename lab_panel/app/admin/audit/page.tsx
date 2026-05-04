@@ -17,6 +17,7 @@ export default function AuditPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [viewLog, setViewLog] = useState<AuditEntry | null>(null);
 
   async function load(p = 1) {
     try {
@@ -46,7 +47,7 @@ export default function AuditPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {logs.map((l) => (
-                <tr key={l._id} className="hover:bg-gray-50">
+                <tr key={l._id} className="hover:bg-gray-50 cursor-pointer" onClick={() => setViewLog(l)}>
                   <td className="px-4 py-2.5 text-gray-500 text-xs">{new Date(l.createdAt).toLocaleString("en-IN")}</td>
                   <td className="px-4 py-2.5">
                     <span className={`text-xs font-mono px-1.5 py-0.5 rounded ${l.method === "DELETE" ? "bg-red-100 text-red-600" : l.method === "POST" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>{l.method}</span>
@@ -69,6 +70,39 @@ export default function AuditPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {viewLog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 relative">
+            <h2 className="text-lg font-bold mb-4">Audit Entry</h2>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Time</span>
+                <span className="text-xs">{new Date(viewLog.createdAt).toLocaleString("en-IN")}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">Method</span>
+                <span className={`text-xs font-mono px-1.5 py-0.5 rounded ${viewLog.method === "DELETE" ? "bg-red-100 text-red-600" : viewLog.method === "POST" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>{viewLog.method}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Path</span>
+                <span className="font-mono text-xs text-gray-700 text-right max-w-xs break-all">{viewLog.path}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">Status</span>
+                <span className={`text-xs px-1.5 py-0.5 rounded ${viewLog.statusCode < 300 ? "bg-green-100 text-green-700" : viewLog.statusCode < 500 ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-600"}`}>{viewLog.statusCode}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">User ID</span>
+                <span className="font-mono text-xs text-gray-600 text-right">{viewLog.userId || "—"}</span>
+              </div>
+            </div>
+            <div className="flex justify-end mt-5">
+              <button onClick={() => setViewLog(null)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Close</button>
+            </div>
+          </div>
         </div>
       )}
     </div>

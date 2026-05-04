@@ -37,7 +37,7 @@ const ParameterResultSchema = new Schema<IParameterResult>(
     parameterId: { type: Schema.Types.ObjectId },
     parameterName: { type: String, required: true },
     unit: { type: String, default: "" },
-    value: { type: String, required: true },
+    value: { type: String, default: "" },
     numericValue: { type: Number },
     normalMin: { type: Number },
     normalMax: { type: Number },

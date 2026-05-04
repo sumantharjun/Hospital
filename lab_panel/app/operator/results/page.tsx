@@ -90,7 +90,7 @@ function ResultsContent() {
           </button>
         )}
         {selectedOrderId && results.some((r) => r.status === "APPROVED") && (
-          <button onClick={() => apiDownloadPdf(`/api/lab/reports/order/${selectedOrderId}/pdf`)} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
+          <button onClick={() => apiDownloadPdf(`/api/lab/reports/order/${selectedOrderId}/pdf`).catch((err) => toast.error(err.message))} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
             Download Report PDF
           </button>
         )}
@@ -151,8 +151,13 @@ function ResultsContent() {
               <div className="flex items-end gap-3">
                 <div className="flex-1">
                   <label className="block text-xs font-medium text-gray-600 mb-1">Overall Remarks</label>
-                  <input value={edits[result._id]?.overallRemarks ?? ""} onChange={(e) => setEdits((prev) => ({ ...prev, [result._id]: { ...prev[result._id], overallRemarks: e.target.value } }))}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Optional remarks…" />
+                  <textarea
+                    rows={2}
+                    value={edits[result._id]?.overallRemarks ?? ""}
+                    onChange={(e) => setEdits((prev) => ({ ...prev, [result._id]: { ...prev[result._id], overallRemarks: e.target.value } }))}
+                    placeholder="Optional remarks or clinical notes…"
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  />
                 </div>
                 <button onClick={() => saveResult(result._id)} disabled={saving} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 disabled:bg-blue-400 flex-shrink-0">
                   {saving ? "Saving…" : "Save Result"}

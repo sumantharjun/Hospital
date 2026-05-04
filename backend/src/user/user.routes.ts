@@ -90,6 +90,11 @@ router.post("/signup", async (req, res) => {
       // LAB_ADMIN's labId is their own _id — set after creation below
     }
 
+    // Accept explicit labId from request body (sent by admin panel)
+    if (!userData.labId && req.body.labId) {
+      userData.labId = req.body.labId;
+    }
+
     const user = await User.create(userData);
 
     // For LAB_ADMIN, store their own _id as labId
@@ -155,6 +160,57 @@ router.post("/signup", async (req, res) => {
     }
     console.error("Signup error:", error);
     res.status(400).json({ message: error.message || "Failed to create user" });
+  }
+});
+
+// Deactivate a lab user (LAB_ADMIN only via lab panel)
+router.patch("/:id/deactivate", requireAuth, requireRole(["LAB_ADMIN", "SUPER_ADMIN"]), async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json({ message: "User deactivated", user });
+  } catch (error: any) {
+    res.status(500).json({ message: "Failed to deactivate user", error: error.message });
+  }
+});
+
+// Reactivate a user
+router.patch("/:id/activate", requireAuth, requireRole(["LAB_ADMIN", "SUPER_ADMIN"]), async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.params.id, { isActive: true }, { new: true });
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json({ message: "User activated", user });
+  } catch (error: any) {
+    res.status(500).json({ message: "Failed to activate user", error: error.message });
+  }
+});
+
+// Update a user's name/email/role (lab panel — LAB_ADMIN scoped)
+router.patch("/:id/lab-update", requireAuth, requireRole(["LAB_ADMIN", "SUPER_ADMIN"]), async (req, res) => {
+  try {
+    const allowed = ["name", "email", "role"];
+    const update: any = {};
+    allowed.forEach((k) => { if (req.body[k] !== undefined) update[k] = req.body[k]; });
+    if (req.body.password) {
+      const bcrypt = require("bcryptjs");
+      update.passwordHash = await bcrypt.hash(req.body.password, 10);
+    }
+    const user = await User.findByIdAndUpdate(req.params.id, update, { new: true });
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json({ message: "User updated", user });
+  } catch (error: any) {
+    res.status(500).json({ message: "Failed to update user", error: error.message });
+  }
+});
+
+// Delete a lab user (LAB_ADMIN only via lab panel)
+router.delete("/:id/lab-delete", requireAuth, requireRole(["LAB_ADMIN", "SUPER_ADMIN"]), async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json({ message: "User deleted" });
+  } catch (error: any) {
+    res.status(500).json({ message: "Failed to delete user", error: error.message });
   }
 });
 
@@ -286,7 +342,7 @@ router.get("/by-role/:role", async (req, res) => {
   const { role } = req.params;
   const users = await User.find({ role })
     .limit(1000)
-      .select("_id name email role hospitalId pharmacyId specialization qualification serviceCharge")
+      .select("_id name email role hospitalId pharmacyId specialization qualification serviceCharge isActive createdAt")
     .sort({ name: 1 })
     .lean();
     // Ensure _id is included as string and include all fields
@@ -296,6 +352,8 @@ router.get("/by-role/:role", async (req, res) => {
     name: user.name,
     email: user.email,
     role: user.role,
+    isActive: user.isActive !== undefined ? user.isActive : true,
+    createdAt: user.createdAt,
     hospitalId: user.hospitalId || undefined,
     pharmacyId: user.pharmacyId || undefined,
       specialization: user.specialization || undefined,

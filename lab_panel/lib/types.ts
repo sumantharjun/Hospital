@@ -41,6 +41,7 @@ export interface LabTest {
   description?: string;
   sampleType: string;
   parameters: TestParameter[];
+  defaultInterpretation?: string;
   price: number;
   taxPercent: number;
   turnAroundTimeHours: number;
