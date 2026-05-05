@@ -1,11 +1,29 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import { User } from "./user.model";
 import { JWT_SECRET } from "../config";
 import { requireAuth, requireRole } from "../shared/middleware/auth";
 import { createActivity } from "../activity/activity.service";
+
+// RFC 6238 TOTP verification (30-second window, ±1 step tolerance)
+function verifyTOTPCode(secret: string, code: string): boolean {
+  if (!secret || !/^\d{6}$/.test(code)) return false;
+  const step = Math.floor(Date.now() / 1000 / 30);
+  const keyBuf = Buffer.from(secret, "base64");
+  for (const offset of [-1, 0, 1]) {
+    const counter = step + offset;
+    const buf = Buffer.alloc(8);
+    buf.writeBigInt64BE(BigInt(counter), 0);
+    const hmac = crypto.createHmac("sha1", keyBuf).update(buf).digest();
+    const idx = hmac[hmac.length - 1] & 0x0f;
+    const otp = ((hmac.readUInt32BE(idx) & 0x7fffffff) % 1_000_000).toString().padStart(6, "0");
+    if (otp === code) return true;
+  }
+  return false;
+}
 
 export const router = Router();
 
@@ -40,6 +58,14 @@ router.post("/signup", async (req, res) => {
     // Validate required fields
     if (!name || !email || !password || !role) {
       return res.status(400).json({ message: "Missing required fields: name, email, password, role" });
+    }
+
+    // SUPER_ADMIN can only be created when no SUPER_ADMIN exists yet (first-time setup)
+    if (role === "SUPER_ADMIN") {
+      const existingSuperAdmin = await User.findOne({ role: "SUPER_ADMIN" });
+      if (existingSuperAdmin) {
+        return res.status(403).json({ message: "Super Admin already exists. Use the admin panel to manage users." });
+      }
     }
 
     const existing = await User.findOne({ email });
@@ -176,6 +202,10 @@ router.post("/login", async (req, res) => {
     return res.status(401).json({ message: "Invalid credentials" });
   }
 
+  if (!user.isActive) {
+    return res.status(403).json({ message: "Account is deactivated. Contact your administrator." });
+  }
+
   // Check if MFA is enabled
   if (user.mfaEnabled) {
     if (!mfaCode) {
@@ -185,8 +215,8 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    // Verify MFA code (simplified - use proper TOTP library in production)
-    const isValidCode = /^\d{6}$/.test(mfaCode) || 
+    // Verify MFA code: proper TOTP check OR backup code
+    const isValidCode = verifyTOTPCode(user.mfaSecret!, mfaCode) ||
       (user.backupCodes && user.backupCodes.includes(mfaCode.toUpperCase()));
     
     if (!isValidCode) {
@@ -810,7 +840,7 @@ router.put(
       }
 
       // Only allow users to update their own location
-      const userId = (req as any).user?.userId;
+      const userId = req.user?.sub;
       if (userId !== id) {
         return res.status(403).json({ message: "You can only update your own location" });
       }

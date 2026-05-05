@@ -1,0 +1,304 @@
+/* Professional Medical/Government Design System for Admin Panel */
+
+:root {
+  /* Primary Colors - Calm Teal & Ocean Blue */
+  --medical-primary: #0ea5a4;
+  --medical-primary-dark: #0f766e;
+  --medical-primary-light: #5eead4;
+  --medical-secondary: #f97316;
+  --medical-secondary-dark: #ea580c;
+  --medical-secondary-light: #fdba74;
+
+  /* Neutral Colors - Soft Modern */
+  --medical-bg: var(--app-bg);
+  --medical-surface: #ffffff;
+  --medical-border: #d7e1ec;
+  --medical-border-light: #eef2f7;
+
+  /* Text Colors */
+  --medical-text-primary: #0b1220;
+  --medical-text-secondary: #54657d;
+  --medical-text-tertiary: #7b8aa0;
+
+  /* Status Colors */
+  --medical-success: #22c55e;
+  --medical-warning: #f59e0b;
+  --medical-error: #ef4444;
+  --medical-info: #3b82f6;
+
+  /* Shadows */
+  --medical-shadow-sm: 0 6px 12px rgba(15, 23, 42, 0.08);
+  --medical-shadow-md: 0 14px 28px rgba(15, 23, 42, 0.12);
+  --medical-shadow-lg: 0 20px 44px rgba(15, 23, 42, 0.16);
+
+  /* Border Radius */
+  --medical-radius-sm: 10px;
+  --medical-radius-md: 14px;
+  --medical-radius-lg: 18px;
+}
+
+/* Professional Card Styles */
+.medical-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.88) 100%);
+  border: 1px solid var(--medical-border);
+  border-radius: var(--medical-radius-lg);
+  box-shadow: var(--medical-shadow-md);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.medical-card-elevated {
+  box-shadow: var(--medical-shadow-lg);
+}
+
+/* Professional Button Styles */
+.medical-btn-primary {
+  background: linear-gradient(135deg, var(--medical-primary), var(--medical-primary-dark));
+  color: white;
+  border: none;
+  border-radius: var(--medical-radius-md);
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  box-shadow: 0 10px 20px rgba(14, 165, 164, 0.28);
+}
+
+.medical-btn-primary:hover {
+  background: linear-gradient(135deg, var(--medical-primary-dark), #0b8f8e);
+  box-shadow: 0 16px 30px rgba(14, 165, 164, 0.34);
+  transform: translateY(-1px);
+}
+
+.medical-btn-secondary {
+  background: linear-gradient(135deg, var(--medical-secondary), var(--medical-secondary-dark));
+  color: white;
+  border: none;
+  border-radius: var(--medical-radius-md);
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+/* Professional Input Styles */
+.medical-input {
+  background: var(--medical-surface);
+  border: 1px solid var(--medical-border);
+  border-radius: var(--medical-radius-md);
+  padding: 0.75rem 1rem;
+  color: var(--medical-text-primary);
+  transition: all 0.2s;
+}
+
+.medical-input:focus {
+  outline: none;
+  border-color: var(--medical-primary);
+  box-shadow: 0 0 0 3px rgba(14, 165, 164, 0.18);
+}
+
+/* Status Badges */
+.medical-badge-success {
+  background: #dcfce7;
+  color: var(--medical-success);
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.medical-badge-warning {
+  background: #fef3c7;
+  color: var(--medical-warning);
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.medical-badge-error {
+  background: #fee2e2;
+  color: var(--medical-error);
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.medical-badge-info {
+  background: #dbeafe;
+  color: var(--medical-info);
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Typography */
+.medical-heading {
+  color: var(--medical-text-primary);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.medical-text-primary {
+  color: var(--medical-text-primary);
+}
+
+.medical-text-secondary {
+  color: var(--medical-text-secondary);
+}
+
+/* Professional Background Gradient */
+.medical-bg-gradient {
+  background: linear-gradient(135deg, #ffffff 0%, #edf2f7 100%);
+}
+
+/* Medical Header Style */
+.medical-header {
+  background: var(--medical-surface);
+  border-bottom: 1px solid var(--medical-border);
+  padding: 1.5rem 2rem;
+  box-shadow: var(--medical-shadow-sm);
+}
+
+/* ── Government/Reception theme aliases ── */
+/* Maps gov-* classes to the medical design system so receptionist pages
+   render correctly without changing their markup. */
+
+.gov-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.88) 100%);
+  border: 1px solid var(--medical-border);
+  border-radius: var(--medical-radius-lg);
+  box-shadow: var(--medical-shadow-md);
+  backdrop-filter: blur(10px);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.gov-input {
+  background: var(--medical-surface);
+  border: 1px solid var(--medical-border);
+  border-radius: var(--medical-radius-md);
+  padding: 0.625rem 1rem;
+  color: var(--medical-text-primary);
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.gov-input:focus {
+  outline: none;
+  border-color: var(--medical-primary);
+  box-shadow: 0 0 0 3px rgba(14, 165, 164, 0.18);
+}
+
+.gov-select {
+  background: var(--medical-surface);
+  border: 1px solid var(--medical-border);
+  border-radius: var(--medical-radius-md);
+  padding: 0.625rem 1rem;
+  color: var(--medical-text-primary);
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.gov-select:focus {
+  outline: none;
+  border-color: var(--medical-primary);
+  box-shadow: 0 0 0 3px rgba(14, 165, 164, 0.18);
+}
+
+.gov-btn-primary {
+  background: linear-gradient(135deg, var(--medical-primary), var(--medical-primary-dark));
+  color: white;
+  border: none;
+  border-radius: var(--medical-radius-md);
+  padding: 0.625rem 1.25rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  box-shadow: 0 8px 16px rgba(14, 165, 164, 0.25);
+  cursor: pointer;
+}
+
+.gov-btn-primary:hover {
+  background: linear-gradient(135deg, var(--medical-primary-dark), #0b8f8e);
+  box-shadow: 0 12px 24px rgba(14, 165, 164, 0.32);
+  transform: translateY(-1px);
+}
+
+.gov-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.gov-table th {
+  background: var(--app-bg);
+  color: var(--medical-text-secondary);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.75rem 1rem;
+  border-bottom: 2px solid var(--medical-border);
+  text-align: left;
+}
+
+.gov-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--medical-border-light);
+  color: var(--medical-text-primary);
+}
+
+.gov-table tr:hover td {
+  background: rgba(14, 165, 164, 0.04);
+}
+
+.gov-badge-success {
+  background: #dcfce7;
+  color: var(--medical-success);
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.gov-badge-warning {
+  background: #fef3c7;
+  color: var(--medical-warning);
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.gov-badge-error {
+  background: #fee2e2;
+  color: var(--medical-error);
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.gov-badge-info {
+  background: #dbeafe;
+  color: var(--medical-info);
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+/* Lab panel theme classes */
+.lab-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.88) 100%);
+  border: 1px solid var(--medical-border);
+  border-radius: var(--medical-radius-lg);
+  box-shadow: var(--medical-shadow-md);
+  padding: 1.5rem;
+  backdrop-filter: blur(10px);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}

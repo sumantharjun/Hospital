@@ -1,0 +1,196 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap");
+@import "tailwindcss";
+@import "./medical-theme.css";
+
+:root {
+  --app-bg: #f3f6fb;
+  --app-bg-soft: #e9eff6;
+  --surface: #ffffff;
+  --surface-soft: #f7f9fc;
+  --surface-glass: rgba(255, 255, 255, 0.76);
+  --ink: #0b1220;
+  --ink-soft: #1b2a3d;
+  --muted: #54657d;
+  --border: #d7e1ec;
+  --accent: #0ea5a4;
+  --accent-strong: #0f766e;
+  --accent-warm: #f97316;
+  --accent-cool: #3b82f6;
+  --shadow-soft: 0 12px 30px rgba(15, 23, 42, 0.08);
+  --shadow-strong: 0 18px 46px rgba(15, 23, 42, 0.14);
+  --radius-lg: 18px;
+  --radius-xl: 22px;
+  --font-body: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+  --font-display: "Space Grotesk", "Segoe UI", sans-serif;
+}
+
+@theme inline {
+  --color-background: var(--app-bg);
+  --color-foreground: var(--ink);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: radial-gradient(1200px 800px at 10% 0%, #ffffff 0%, var(--app-bg) 55%, var(--app-bg-soft) 100%);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  letter-spacing: -0.012em;
+}
+
+.app-shell {
+  background: var(--app-bg);
+}
+
+.page-shell {
+  background: var(--app-bg);
+}
+
+.topbar {
+  background: rgba(255, 255, 255, 0.82);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(14px);
+}
+
+.sidebar-shell {
+  background: linear-gradient(180deg, #0b1629 0%, #10223b 55%, #0c1a2f 100%);
+  color: #e5eefb;
+  border-right: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.sidebar-brand {
+  background: linear-gradient(135deg, #22d3ee 0%, #14b8a6 50%, #0ea5e9 100%);
+  box-shadow: 0 12px 24px rgba(34, 211, 238, 0.28);
+}
+
+.nav-item {
+  border-radius: 14px;
+  transition: all 0.2s ease;
+}
+
+.nav-item-idle {
+  color: rgba(226, 232, 240, 0.75);
+}
+
+.nav-item-idle:hover {
+  background: rgba(148, 163, 184, 0.14);
+  color: #ffffff;
+}
+
+.nav-item-active {
+  background: linear-gradient(135deg, rgba(14, 165, 164, 0.95), rgba(59, 130, 246, 0.9));
+  color: #ffffff;
+  box-shadow: 0 14px 30px rgba(14, 165, 164, 0.28);
+}
+
+.section-label {
+  letter-spacing: 0.2em;
+}
+
+/* Professional Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #e7eef7;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #b9c6d8;
+  border-radius: 4px;
+  border: 2px solid #e7eef7;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #93a4bb;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Better sidebar scrollbar */
+aside nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+aside nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+aside nav::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.6);
+  border-radius: 3px;
+}
+
+aside nav::-webkit-scrollbar-thumb:hover {
+  background: rgba(203, 213, 225, 0.85);
+}
+
+/* Card scrollable areas */
+.medical-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.medical-card > div[class*="overflow-y-auto"] {
+  scrollbar-width: thin;
+  scrollbar-color: #b9c6d8 #e7eef7;
+}
+
+.medical-card > div[class*="overflow-y-auto"]::-webkit-scrollbar {
+  width: 6px;
+}
+
+.medical-card > div[class*="overflow-y-auto"]::-webkit-scrollbar-track {
+  background: #e7eef7;
+  border-radius: 3px;
+}
+
+.medical-card > div[class*="overflow-y-auto"]::-webkit-scrollbar-thumb {
+  background: #b9c6d8;
+  border-radius: 3px;
+}
+
+.medical-card > div[class*="overflow-y-auto"]::-webkit-scrollbar-thumb:hover {
+  background: #93a4bb;
+}
+
+/* Modal card scrollbars - always visible */
+.overflow-y-auto {
+  scrollbar-width: thin;
+  scrollbar-color: #93a4bb #e7eef7;
+}
+
+.overflow-y-auto::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  -webkit-appearance: none;
+  display: block;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: #e7eef7;
+  border-radius: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #93a4bb;
+  border-radius: 4px;
+  border: 1px solid #e7eef7;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #6e829c;
+}

@@ -86,8 +86,7 @@ export function initializeSocket(server: HTTPServer): SocketIOServer {
     }
 
     try {
-      // Verify token, but ignore expiration errors since tokens never expire
-      const decoded = jwt.verify(token, JWT_SECRET, { ignoreExpiration: true }) as JWTPayload;
+      const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
       socket.userId = decoded.sub;
       socket.userRole = decoded.role;
       next();
@@ -134,7 +133,7 @@ export function initializeSocket(server: HTTPServer): SocketIOServer {
     }
 
     // Join admin room
-    if (userRole === "SUPER_ADMIN" || userRole === "ADMIN") {
+    if (userRole === "SUPER_ADMIN" || userRole === "HOSPITAL_ADMIN") {
       socket.join("admin");
       log(`✅ User ${userId} joined admin room`);
     }

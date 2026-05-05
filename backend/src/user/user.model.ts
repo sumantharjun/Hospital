@@ -9,7 +9,8 @@ export type UserRole =
   | "PATIENT"
   | "DELIVERY_AGENT"
   | "RECEPTIONIST"
-  | "NURSE";
+  | "NURSE"
+  | "LAB_TECH";
 
 /** Role within a pharmacy branch (for multi-login per branch) */
 export type PharmacyBranchRole = "PHARMACY_MANAGER" | "PHARMACY_CASHIER" | "PHARMACY_STAFF";
@@ -60,7 +61,7 @@ const UserSchema = new Schema<IUser>(
     passwordHash: { type: String, required: true },
     role: {
       type: String,
-      enum: ["SUPER_ADMIN", "HOSPITAL_ADMIN", "DOCTOR", "PHARMACY_STAFF", "DISTRIBUTOR", "PATIENT", "DELIVERY_AGENT", "RECEPTIONIST", "NURSE"],
+      enum: ["SUPER_ADMIN", "HOSPITAL_ADMIN", "DOCTOR", "PHARMACY_STAFF", "DISTRIBUTOR", "PATIENT", "DELIVERY_AGENT", "RECEPTIONIST", "NURSE", "LAB_TECH"],
       required: true,
     },
     hospitalId: { type: String },

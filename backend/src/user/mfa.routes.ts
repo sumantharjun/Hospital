@@ -113,10 +113,21 @@ router.post("/disable", requireAuth, async (req: Request, res: Response) => {
   }
 });
 
-// Simple TOTP verification (for demo - use 'otplib' in production)
+// RFC 6238 TOTP verification (30-second window, ±1 step tolerance)
 function verifyTOTP(secret: string, code: string): boolean {
-  // This is a simplified version - in production use a proper TOTP library
-  // For now, accept any 6-digit code if secret exists (demo mode)
-  return /^\d{6}$/.test(code);
+  if (!/^\d{6}$/.test(code)) return false;
+  const crypto = require("crypto");
+  const step = Math.floor(Date.now() / 1000 / 30);
+  const keyBuf = Buffer.from(secret, "base64");
+  for (const offset of [-1, 0, 1]) {
+    const counter = step + offset;
+    const buf = Buffer.alloc(8);
+    buf.writeBigInt64BE(BigInt(counter), 0);
+    const hmac = crypto.createHmac("sha1", keyBuf).update(buf).digest();
+    const idx = hmac[hmac.length - 1] & 0x0f;
+    const otp = ((hmac.readUInt32BE(idx) & 0x7fffffff) % 1_000_000).toString().padStart(6, "0");
+    if (otp === code) return true;
+  }
+  return false;
 }
 
