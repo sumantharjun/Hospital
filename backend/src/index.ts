@@ -17,23 +17,9 @@ const httpServer = createServer(app);
 
 app.set("etag", false);
 
-const allowedOriginsEnv = process.env.ALLOWED_ORIGINS;
-const allowedOrigins = allowedOriginsEnv
-  ? allowedOriginsEnv.split(",").map((o) => o.trim())
-  : [];
-
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (Postman, server-to-server, mobile apps)
-      if (!origin) return callback(null, true);
-      // If ALLOWED_ORIGINS not configured yet, allow all origins
-      if (allowedOrigins.length === 0) return callback(null, true);
-      // Always allow localhost for local development
-      if (origin.includes("localhost")) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-      callback(new Error("Not allowed by CORS"));
-    },
+    origin: true,
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: [
