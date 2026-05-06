@@ -17,20 +17,21 @@ const httpServer = createServer(app);
 
 app.set("etag", false);
 
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:3000,http://localhost:3001,http://localhost:3002")
-  .split(",")
-  .map((o) => o.trim());
+const allowedOriginsEnv = process.env.ALLOWED_ORIGINS;
+const allowedOrigins = allowedOriginsEnv
+  ? allowedOriginsEnv.split(",").map((o) => o.trim())
+  : [];
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (server-to-server, Postman, mobile apps)
+      // Allow requests with no origin (Postman, server-to-server, mobile apps)
       if (!origin) return callback(null, true);
+      // If ALLOWED_ORIGINS not configured yet, allow all origins
+      if (allowedOrigins.length === 0) return callback(null, true);
+      // Always allow localhost for local development
+      if (origin.includes("localhost")) return callback(null, true);
       if (allowedOrigins.includes(origin)) return callback(null, true);
-      // In development allow all localhost origins
-      if (process.env.NODE_ENV !== "production" && origin.includes("localhost")) {
-        return callback(null, true);
-      }
       callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
