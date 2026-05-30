@@ -1,0 +1,12 @@
+# Netlify config for the Lab Panel (Next.js 15, App Router).
+# Lives inside lab_panel/ — set the site's "Base directory" to lab_panel
+# in Netlify so this file is picked up.
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+# Official Next.js runtime — required for SSR / server-side redirects
+# (the root page redirects to /login). Without it Netlify serves static
+# files only and every route 404s. Netlify installs this from npm automatically.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
