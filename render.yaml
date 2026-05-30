@@ -1,0 +1,25 @@
+# Render Blueprint — Hospital backend (Express + MongoDB + Socket.io)
+# Deploy: Render Dashboard → New → Blueprint → connect this repo.
+# Set the secret env vars (MONGO_URI, JWT_SECRET, FRONTEND_URL) in the dashboard.
+services:
+  - type: web
+    name: hospital-backend
+    runtime: node
+    rootDir: backend
+    plan: free
+    region: oregon
+    branch: Lab
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Render injects PORT automatically; the app reads process.env.PORT.
+      - key: MONGO_URI
+        sync: false   # set in dashboard (MongoDB Atlas connection string)
+      - key: JWT_SECRET
+        sync: false   # must match the lab panel's JWT_SECRET on Vercel
+      - key: FRONTEND_URL
+        sync: false   # set to the Vercel lab-panel URL once it exists

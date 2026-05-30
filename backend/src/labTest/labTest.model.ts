@@ -11,6 +11,7 @@ export type LabTestCategory =
   | "OTHER";
 
 export interface ITestParameter {
+  _id?: mongoose.Types.ObjectId;
   name: string;
   unit: string;
   normalMin?: number;
