@@ -1,7 +1,7 @@
 import { Server as HTTPServer } from "http";
 import { Server as SocketIOServer, Socket } from "socket.io";
 import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "../config";
+import { JWT_SECRET, isOriginAllowed } from "../config";
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;
@@ -44,30 +44,16 @@ const getUserRoom = (userId: string): string => `user:${userId}`;
 const getRoleRoom = (role: string): string => `role:${role}`;
 
 export function initializeSocket(server: HTTPServer): SocketIOServer {
-  // Allow multiple frontend origins for Socket.IO
-  const allowedOrigins = [
-    process.env.FRONTEND_URL || "http://localhost:3000",
-    "http://localhost:3000", // Default Next.js port
-    "http://localhost:3001", // Alternative port for patient app
-    "http://localhost:3002", // Alternative port for doctor app
-  ];
-
   io = new SocketIOServer(server, {
     cors: {
+      // Shares the ALLOWED_ORIGINS allowlist with the REST API so every panel
+      // origin works in production, not just a single FRONTEND_URL.
       origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps or Postman)
-        if (!origin) return callback(null, true);
-        
-        // Check if origin is in allowed list
-        if (allowedOrigins.includes(origin)) {
+        if (isOriginAllowed(origin)) {
           callback(null, true);
         } else {
-          // In development, allow all localhost origins
-          if (process.env.NODE_ENV !== "production" && origin.includes("localhost")) {
-            callback(null, true);
-          } else {
-            callback(new Error("Not allowed by CORS"));
-          }
+          logWarn(`Socket.IO rejected origin: ${origin}`);
+          callback(new Error("Not allowed by CORS"));
         }
       },
       methods: ["GET", "POST"],
@@ -86,8 +72,7 @@ export function initializeSocket(server: HTTPServer): SocketIOServer {
     }
 
     try {
-      // Verify token, but ignore expiration errors since tokens never expire
-      const decoded = jwt.verify(token, JWT_SECRET, { ignoreExpiration: true }) as JWTPayload;
+      const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
       socket.userId = decoded.sub;
       socket.userRole = decoded.role;
       next();

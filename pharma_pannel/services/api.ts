@@ -313,7 +313,7 @@ export const deliveryAgentApi = {
   create: (data: any) =>
     fetch(`${API_BASE}/api/users/signup`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...getAuthHeaders() },
       body: JSON.stringify({
         name: data.name,
         email: data.email || `${data.name.toLowerCase().replace(/\s+/g, '.')}@delivery.local`,

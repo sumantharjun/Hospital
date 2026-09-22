@@ -1,4 +1,5 @@
 import { Express } from "express";
+import { requireAuth, requireRole } from "./shared/middleware/auth";
 import { router as userRouter } from "./user/user.routes";
 import { router as appointmentRouter } from "./appointment/appointment.routes";
 import { router as prescriptionRouter } from "./prescription/prescription.routes";
@@ -76,12 +77,22 @@ export function registerRoutes(app: Express) {
   // Mount inventory search routes FIRST so /search, /brands-by-composition, /expiry-risk are matched before /:id
   app.use("/api/inventory", inventorySearchRouter);
   app.use("/api/inventory", inventoryRouter);
-  app.use("/api/distributor-orders", distributorOrderRouter);
-  app.use("/api/finance", financeRouter);
+  app.use(
+    "/api/distributor-orders",
+    requireAuth,
+    requireRole(["SUPER_ADMIN", "HOSPITAL_ADMIN", "PHARMACY_STAFF", "DISTRIBUTOR", "DELIVERY_AGENT"]),
+    distributorOrderRouter
+  );
+  app.use("/api/finance", requireAuth, financeRouter);
   app.use("/api/master", masterRouter);
   app.use("/api/orders", orderRouter);
   app.use("/api/notifications", notificationRouter);
-  app.use("/api/patient-records", patientRecordRouter);
+  app.use(
+    "/api/patient-records",
+    requireAuth,
+    requireRole(["SUPER_ADMIN", "HOSPITAL_ADMIN", "DOCTOR", "NURSE", "RECEPTIONIST"]),
+    patientRecordRouter
+  );
   app.use("/api/activities", activityRouter);
   app.use("/api/pricing", pricingRouter);
   app.use("/api/conversations", conversationRouter);

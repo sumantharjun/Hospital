@@ -236,7 +236,7 @@ function CheckoutContent() {
 
       // Redirect to order tracking
       const orderId = (order as any)._id || (order as any).id;
-      router.push(`/orders/track/${orderId}`);
+      router.push(`/orders/track?id=${orderId}`);
     } catch (error: any) {
       toast.error(error.message || "Failed to place order");
     } finally {

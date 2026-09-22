@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { Suspense, useEffect, useState, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { apiGet, apiPost, apiPatch } from "@/lib/api";
@@ -35,10 +35,10 @@ interface Conversation {
   isActive?: boolean;
 }
 
-export default function ConsultationPage() {
+function ConsultationPageContent() {
   const router = useRouter();
-  const params = useParams();
-  const appointmentId = params.id as string;
+  const searchParams = useSearchParams();
+  const appointmentId = searchParams.get("id") ?? "";
   const [appointment, setAppointment] = useState<Appointment | null>(null);
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [message, setMessage] = useState("");
@@ -624,3 +624,16 @@ export default function ConsultationPage() {
   );
 }
 
+export default function ConsultationPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center text-gray-500">
+          Loading...
+        </div>
+      }
+    >
+      <ConsultationPageContent />
+    </Suspense>
+  );
+}

@@ -1,0 +1,70 @@
+# ---------------------------------------------------------------------------
+# Hostinger (Apache / LiteSpeed) config for a Next.js static export.
+# Lives in public/ so `next build` copies it into out/ automatically.
+# ---------------------------------------------------------------------------
+
+# Routes are pre-rendered as real directories (trailingSlash: true), so
+# /dashboard/ resolves to /dashboard/index.html with no rewrites needed.
+DirectoryIndex index.html
+
+# Stop Apache guessing extensions, which can shadow the exported directories.
+Options -MultiViews
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Force HTTPS. Hostinger terminates TLS upstream, so trust X-Forwarded-Proto.
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+</IfModule>
+
+# --- Legacy path redirects ------------------------------------------------
+# These were `redirects()` in next.config.mjs before the static export; a
+# static build has no server to run them, so Apache handles them instead.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^dashboard/?$      /reception/dashboard/      [R=302,L]
+  RewriteRule ^patients/?$       /reception/patients/       [R=302,L]
+  RewriteRule ^appointments/?$   /reception/appointments/   [R=302,L]
+  RewriteRule ^billing/?$        /reception/billing/        [R=302,L]
+  RewriteRule ^history/?$        /reception/history/        [R=302,L]
+  RewriteRule ^receipts/?$       /reception/receipts/       [R=302,L]
+  RewriteRule ^reports/?$        /reception/reports/        [R=302,L]
+  RewriteRule ^payments/?$       /reception/payments/       [R=302,L]
+  RewriteRule ^invoices/?$       /reception/invoices/       [R=302,L]
+  RewriteRule ^prescriptions/?$  /reception/prescriptions/  [R=302,L]
+</IfModule>
+
+ErrorDocument 404 /404.html
+
+# --- Caching --------------------------------------------------------------
+<IfModule mod_headers.c>
+  # Hashed build assets are immutable; cache them hard.
+  <FilesMatch "\.(js|css|woff2|woff|ttf|svg|png|jpg|jpeg|gif|webp|avif|ico)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+
+  # HTML must revalidate, otherwise users keep a stale app after a redeploy.
+  <FilesMatch "\.html$">
+    Header set Cache-Control "public, max-age=0, must-revalidate"
+  </FilesMatch>
+
+  # --- Security headers ---------------------------------------------------
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+</IfModule>
+
+# --- Compression ----------------------------------------------------------
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css text/javascript
+  AddOutputFilterByType DEFLATE application/javascript application/json
+  AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+# Never expose a stray .env if one is ever uploaded by mistake.
+<FilesMatch "^\.env">
+  Require all denied
+</FilesMatch>

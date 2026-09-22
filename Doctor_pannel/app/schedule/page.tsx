@@ -79,7 +79,7 @@ export default function SchedulePage() {
     } catch (error: any) {
       console.error("Error fetching schedules:", error);
       if (error.isNetworkError || error.message?.includes("connect to server")) {
-        setApiError("Unable to connect to backend server. Please ensure the server is running on http://localhost:4000");
+        setApiError("Unable to reach the server. Check your connection and try again.");
       } else {
         setApiError(error.message || "Failed to load schedules");
       }

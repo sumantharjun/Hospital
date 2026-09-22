@@ -11,42 +11,38 @@ import { AggregationService } from "../shared/services/aggregation.service";
 import { DoctorSchedule, Slot } from "../schedule/schedule.model";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config";
+import {
+  OTP_EXPIRES_IN_SECONDS,
+  issueOtp,
+  normalizePhone,
+  verifyOtp,
+} from "../shared/services/otp.service";
 
 export const router = Router();
 
-// Simple in-memory OTP storage (use Redis in production)
-const otpStore = new Map<string, { otp: string; expiresAt: number }>();
-
-// Generate 6-digit OTP
-const generateOTP = (): string => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-};
-
-// Send OTP (mock implementation - integrate with SMS service in production)
 router.post("/otp/send", async (req: Request, res: Response) => {
   try {
-    const { phone } = req.body;
+    const normalizedPhone = normalizePhone(req.body?.phone);
 
-    if (!phone || phone.length !== 10) {
+    if (normalizedPhone.length !== 10) {
       return res.status(400).json({
         success: false,
         message: "Valid 10-digit phone number is required",
       });
     }
 
-    // Generate OTP - use 1234 for demo
-    const otp = "1234";
-    const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
-
-    // Store OTP
-    otpStore.set(phone, { otp, expiresAt });
-
+    const issued = await issueOtp(normalizedPhone);
+    if (!issued) {
+      return res.status(503).json({
+        success: false,
+        message: "OTP delivery is not available. Please try again later.",
+      });
+    }
 
     res.json({
       success: true,
       message: "OTP sent successfully",
-      // Remove this in production - only for demo
-      demoOtp: process.env.NODE_ENV === "development" ? otp : undefined,
+      expiresIn: OTP_EXPIRES_IN_SECONDS,
     });
   } catch (error: any) {
     res.status(500).json({
@@ -61,43 +57,30 @@ router.post("/otp/send", async (req: Request, res: Response) => {
 router.post("/otp/verify", async (req: Request, res: Response) => {
   try {
     const { phone, otp } = req.body;
+    const normalizedPhone = normalizePhone(phone);
 
-    if (!phone || !otp) {
+    if (normalizedPhone.length !== 10 || !otp) {
       return res.status(400).json({
         success: false,
         message: "Phone number and OTP are required",
       });
     }
 
-    // Check OTP
-    const stored = otpStore.get(phone);
-    if (!stored) {
-      return res.status(400).json({
-        success: false,
-        message: "OTP not found. Please request a new OTP",
-      });
-    }
-
-    if (Date.now() > stored.expiresAt) {
-      otpStore.delete(phone);
-      return res.status(400).json({
-        success: false,
-        message: "OTP expired. Please request a new OTP",
-      });
-    }
-
-    if (stored.otp !== otp) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid OTP",
-      });
+    const result = verifyOtp(normalizedPhone, otp);
+    if (!result.ok) {
+      return res.status(result.status).json({ success: false, message: result.message });
     }
 
     // OTP verified - find or create user
-    let user = await User.findOne({ 
+    // Match stored numbers that carry a country code too (e.g. +919876543210),
+    // otherwise a returning patient gets a duplicate record. Mirrors the
+    // lookup in user/otp.routes.ts.
+    let user = await User.findOne({
       $or: [
-        { phone: phone },
-        { phoneNumber: phone }
+        { phone: normalizedPhone },
+        { phoneNumber: normalizedPhone },
+        { phone: { $regex: normalizedPhone + "$" } },
+        { phoneNumber: { $regex: normalizedPhone + "$" } },
       ],
       role: "PATIENT"
     });
@@ -106,14 +89,14 @@ router.post("/otp/verify", async (req: Request, res: Response) => {
       // Create new patient user
       // Generate a random password hash (user won't use it for OTP login)
       const bcrypt = await import("bcryptjs");
-      const defaultPasswordHash = await bcrypt.hash(phone + Date.now(), 10);
+      const defaultPasswordHash = await bcrypt.hash(normalizedPhone + Date.now(), 10);
       
       user = await User.create({
-        name: `Patient ${phone}`,
-        email: `${phone}@patient.local`, // Temporary email
+        name: `Patient ${normalizedPhone}`,
+        email: `${normalizedPhone}@patient.local`, // Temporary email
         passwordHash: defaultPasswordHash,
         role: "PATIENT",
-        phone: phone,
+        phone: normalizedPhone,
         isActive: true,
       });
     }
@@ -124,11 +107,9 @@ router.post("/otp/verify", async (req: Request, res: Response) => {
         sub: String(user._id),
         role: user.role,
       },
-      JWT_SECRET
+      JWT_SECRET,
+      { expiresIn: "7d" }
     );
-
-    // Clear OTP after successful verification
-    otpStore.delete(phone);
 
     const userResponse: any = {
       id: String(user._id),

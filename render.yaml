@@ -1,0 +1,64 @@
+# Render blueprint for the Hospital Ecosystem API.
+#
+# The 7 Next.js panels deploy separately on Vercel (see DEPLOYMENT.md); only the
+# backend lives here because it needs a long-lived process for Socket.IO and a
+# persistent disk for uploads.
+#
+# Deploy: Render Dashboard -> New -> Blueprint -> point at this repo.
+
+services:
+  - type: web
+    name: hospital-api
+    runtime: node
+    rootDir: backend
+    plan: starter # Socket.IO needs an always-on instance; free tier sleeps.
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+
+    # IMPORTANT: keep this at 1 instance.
+    # OTP codes and Socket.IO presence are held in process memory and there is no
+    # Redis adapter, so a second instance breaks logins and real-time updates.
+    numInstances: 1
+
+    # Uploaded prescriptions/product images. Without this disk every redeploy
+    # wipes them, because Render's container filesystem is ephemeral.
+    disk:
+      name: hospital-uploads
+      mountPath: /var/data/uploads
+      sizeGB: 10
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: UPLOAD_DIR
+        value: /var/data/uploads
+
+      # Generated once by Render and kept stable across deploys.
+      - key: JWT_SECRET
+        generateValue: true
+
+      # Set these in the Render dashboard — never commit them.
+      - key: MONGO_URI
+        sync: false
+      # Comma-separated Vercel panel origins, no trailing slashes.
+      - key: ALLOWED_ORIGINS
+        sync: false
+
+      # OTP delivery (login depends on this in production).
+      - key: TEXT_LOCAL_API_KEY
+        sync: false
+      - key: TEXT_LOCAL_SENDER
+        value: TXTLCL
+
+      # Optional notification channels.
+      - key: GMAIL_USER
+        sync: false
+      - key: GMAIL_APP_PASSWORD
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_WHATSAPP_FROM
+        sync: false

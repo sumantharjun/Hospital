@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { apiGet, apiPost } from "@/lib/api";
@@ -28,10 +28,10 @@ interface Slot {
   date: string;
 }
 
-export default function DoctorBookingPage() {
+function DoctorBookingPageContent() {
   const router = useRouter();
-  const params = useParams();
-  const doctorId = params.doctorId as string;
+  const searchParams = useSearchParams();
+  const doctorId = searchParams.get("doctorId") ?? "";
   
   const [step, setStep] = useState(1); // 1: Details, 2: Slot, 3: Personal Info, 4: Payment
   const [doctor, setDoctor] = useState<Doctor | null>(null);
@@ -755,3 +755,16 @@ export default function DoctorBookingPage() {
   );
 }
 
+export default function DoctorBookingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center text-gray-500">
+          Loading...
+        </div>
+      }
+    >
+      <DoctorBookingPageContent />
+    </Suspense>
+  );
+}

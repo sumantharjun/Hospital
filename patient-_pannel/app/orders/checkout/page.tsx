@@ -133,7 +133,7 @@ export default function CheckoutPage() {
       sessionStorage.removeItem("pendingOrder");
 
       // Redirect to track order page
-      router.push(`/orders/track/${(createdOrder as any)._id}`);
+      router.push(`/orders/track?id=${(createdOrder as any)._id}`);
     } catch (error: any) {
       toast.error("Failed to place order: " + (error.message || "Unknown error"));
       setLoading(false);

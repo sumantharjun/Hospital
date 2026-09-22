@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { apiGet, apiPut } from "@/lib/api";
 import { getSocket, onSocketEvent, offSocketEvent } from "@/lib/socket";
@@ -32,10 +32,10 @@ interface Order {
   pharmacy?: { name: string; address: string };
 }
 
-export default function TrackOrderPage() {
+function TrackOrderPageContent() {
   const router = useRouter();
-  const params = useParams();
-  const orderId = params.id as string;
+  const searchParams = useSearchParams();
+  const orderId = searchParams.get("id") ?? "";
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
@@ -580,3 +580,16 @@ export default function TrackOrderPage() {
   );
 }
 
+export default function TrackOrderPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center text-gray-500">
+          Loading...
+        </div>
+      }
+    >
+      <TrackOrderPageContent />
+    </Suspense>
+  );
+}

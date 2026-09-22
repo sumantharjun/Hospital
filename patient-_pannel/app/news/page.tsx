@@ -279,7 +279,7 @@ export default function NewsPage() {
                               notification.type === "MESSAGE_RECEIVED") && 
                               notification.metadata?.appointmentId && (
                               <Link
-                                href={`/consultation/${notification.metadata.appointmentId}`}
+                                href={`/consultation?id=${notification.metadata.appointmentId}`}
                                 className="rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-700 shadow-sm"
                               >
                                 💬 Open Chat

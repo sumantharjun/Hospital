@@ -356,7 +356,7 @@ export default function OrdersPage() {
                   </div>
                   <div className="flex flex-row sm:flex-col gap-2 sm:ml-4 flex-shrink-0">
                     <Link
-                      href={`/orders/track/${order._id}`}
+                      href={`/orders/track?id=${order._id}`}
                       className="rounded-lg border border-gray-300 bg-white px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-50 shadow-sm whitespace-nowrap"
                     >
                       Track Order

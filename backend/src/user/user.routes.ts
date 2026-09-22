@@ -9,6 +9,76 @@ import { createActivity } from "../activity/activity.service";
 
 export const router = Router();
 
+const ALL_ROLES = [
+  "SUPER_ADMIN",
+  "HOSPITAL_ADMIN",
+  "DOCTOR",
+  "PHARMACY_STAFF",
+  "DISTRIBUTOR",
+  "PATIENT",
+  "DELIVERY_AGENT",
+  "RECEPTIONIST",
+  "NURSE",
+] as const;
+
+// Roles allowed to create other users, and which roles they may create.
+const STAFF_CREATOR_ROLES = new Set(["SUPER_ADMIN", "HOSPITAL_ADMIN"]);
+
+type SignupDecision = { ok: true } | { ok: false; status: number; message: string };
+
+/** Decode a bearer/cookie token without rejecting the request when absent. */
+function peekUser(req: any): { sub: string; role: string } | null {
+  let token: string | undefined;
+  const header = req.headers?.authorization;
+  if (typeof header === "string" && header.startsWith("Bearer ")) {
+    token = header.substring(7);
+  }
+  if (!token) token = req.cookies?.token;
+  if (!token) return null;
+  try {
+    return jwt.verify(token, JWT_SECRET) as { sub: string; role: string };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * /signup doubles as both patient self-registration and the admin panel's
+ * user-creation endpoint, so it cannot simply be closed off. It previously
+ * accepted an arbitrary `role` with no authentication at all, letting anyone
+ * mint a SUPER_ADMIN. Authorization is therefore decided per requested role.
+ */
+async function authorizeSignup(req: any, role: string): Promise<SignupDecision> {
+  if (!ALL_ROLES.includes(role as any)) {
+    return { ok: false, status: 400, message: `Unsupported role: ${role}` };
+  }
+
+  // Patients may self-register (patient panel, reception desk).
+  if (role === "PATIENT") return { ok: true };
+
+  const caller = peekUser(req);
+
+  if (role === "SUPER_ADMIN") {
+    if (caller?.role === "SUPER_ADMIN") return { ok: true };
+    // First-run bootstrap: permitted only while no SUPER_ADMIN exists.
+    const existing = await User.countDocuments({ role: "SUPER_ADMIN" });
+    if (existing === 0) return { ok: true };
+    return {
+      ok: false,
+      status: 403,
+      message: "Only a SUPER_ADMIN can create another SUPER_ADMIN",
+    };
+  }
+
+  if (!caller) {
+    return { ok: false, status: 401, message: "Authentication required to create this user" };
+  }
+  if (!STAFF_CREATOR_ROLES.has(caller.role)) {
+    return { ok: false, status: 403, message: "Not permitted to create this user" };
+  }
+  return { ok: true };
+}
+
 // Contact Support endpoint
 router.post(
   "/support/contact",
@@ -40,6 +110,11 @@ router.post("/signup", async (req, res) => {
     // Validate required fields
     if (!name || !email || !password || !role) {
       return res.status(400).json({ message: "Missing required fields: name, email, password, role" });
+    }
+
+    const decision = await authorizeSignup(req, role);
+    if (!decision.ok) {
+      return res.status(decision.status).json({ message: decision.message });
     }
 
     const existing = await User.findOne({ email });
@@ -249,19 +324,22 @@ router.get("/check-role/:email", async (req, res) => {
       return res.json({ isAdmin: false, role: null, exists: false });
     }
     const isAdmin = user.role === "SUPER_ADMIN" || user.role === "HOSPITAL_ADMIN";
-    res.json({ 
-      isAdmin, 
-      role: user.role, 
+    res.json({
+      isAdmin,
       exists: true,
-      isActive: user.isActive 
+      isActive: user.isActive,
     });
   } catch (error: any) {
     res.status(400).json({ message: error.message });
   }
 });
 
-// Public endpoint to get users by role (for doctor listing, etc.)
-router.get("/by-role/:role", async (req, res) => {
+// Users by role (doctor listing, etc.) — staff only.
+router.get(
+  "/by-role/:role",
+  requireAuth,
+  requireRole(["SUPER_ADMIN", "HOSPITAL_ADMIN", "DOCTOR", "RECEPTIONIST", "NURSE"]),
+  async (req, res) => {
   try {
   const { role } = req.params;
   const users = await User.find({ role })
@@ -287,7 +365,8 @@ router.get("/by-role/:role", async (req, res) => {
     console.error("Error fetching users by role:", error);
     res.status(500).json({ message: error.message || "Failed to fetch users" });
   }
-});
+  }
+);
 
 // Admin endpoint to get all users (with optional role and status filters)
 router.get(

@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Static HTML export for Hostinger shared hosting (no Node.js runtime).
+  output: "export",
+  trailingSlash: true,
+  images: { unoptimized: true },
+  reactStrictMode: true,
 };
 
 export default nextConfig;

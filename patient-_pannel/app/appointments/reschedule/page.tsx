@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { apiGet, apiPatch } from "@/lib/api";
@@ -22,10 +22,10 @@ interface Slot {
   date: string;
 }
 
-export default function ReschedulePage() {
+function ReschedulePageContent() {
   const router = useRouter();
-  const params = useParams();
-  const appointmentId = params.id as string;
+  const searchParams = useSearchParams();
+  const appointmentId = searchParams.get("id") ?? "";
   const [appointment, setAppointment] = useState<Appointment | null>(null);
   const [slots, setSlots] = useState<Slot[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>("");
@@ -266,3 +266,16 @@ export default function ReschedulePage() {
   );
 }
 
+export default function ReschedulePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center text-gray-500">
+          Loading...
+        </div>
+      }
+    >
+      <ReschedulePageContent />
+    </Suspense>
+  );
+}

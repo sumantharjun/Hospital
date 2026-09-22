@@ -29,7 +29,7 @@ export async function apiFetch(
     }).catch((fetchError: any) => {
       // Network error - backend not reachable
       console.error("[API] Fetch failed:", fetchError);
-      const networkError = new Error("Unable to connect to server. Please ensure the backend is running on http://localhost:4000");
+      const networkError = new Error("Unable to reach the server. Check your connection and try again.");
       (networkError as any).isNetworkError = true;
       (networkError as any).originalError = fetchError;
       throw networkError;
@@ -64,7 +64,7 @@ export async function apiFetch(
     
     // Handle other fetch errors
     if (error.name === "TypeError" || error.message === "Failed to fetch" || error.message?.includes("fetch")) {
-      const networkError = new Error("Unable to connect to server. Please ensure the backend is running on http://localhost:4000");
+      const networkError = new Error("Unable to reach the server. Check your connection and try again.");
       (networkError as any).isNetworkError = true;
       throw networkError;
     }

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { apiGet, apiPatch } from "@/lib/api";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -58,10 +58,10 @@ interface Prescription {
   suggestions?: string;
 }
 
-export default function PatientHistoryPage() {
+function PatientHistoryPageContent() {
   const router = useRouter();
-  const params = useParams();
-  const patientId = params.id as string;
+  const searchParams = useSearchParams();
+  const patientId = searchParams.get("id") ?? "";
   const [patient, setPatient] = useState<Patient | null>(null);
   const [record, setRecord] = useState<PatientRecord | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -555,5 +555,19 @@ export default function PatientHistoryPage() {
         )}
       </div>
     </DashboardLayout>
+  );
+}
+
+export default function PatientHistoryPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center text-gray-500">
+          Loading...
+        </div>
+      }
+    >
+      <PatientHistoryPageContent />
+    </Suspense>
   );
 }

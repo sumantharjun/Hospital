@@ -554,14 +554,14 @@ export default function DashboardPage() {
                   <div className="flex gap-3">
                     {appointment.status === "CONFIRMED" && (
                       <Link
-                        href={`/consultation/${appointment._id}`}
+                        href={`/consultation?id=${appointment._id}`}
                         className="rounded-lg bg-blue-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-800 transition-colors"
                       >
                         Start Consultation
                       </Link>
                     )}
                     <Link
-                      href={`/patients/${appointment.patientId}`}
+                      href={`/patients?id=${appointment.patientId}`}
                       className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 shadow-sm transition-colors"
                     >
                       View History

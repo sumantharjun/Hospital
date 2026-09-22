@@ -523,7 +523,7 @@ export default function AppointmentsPage() {
                     {appointment.status === "PENDING" && (
                       <>
                         <button
-                          onClick={() => router.push(`/appointments/reschedule/${appointment._id}`)}
+                          onClick={() => router.push(`/appointments/reschedule?id=${appointment._id}`)}
                           className="rounded-lg border border-gray-300 bg-white px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-50 shadow-sm transition-colors whitespace-nowrap"
                         >
                           Reschedule
@@ -553,7 +553,7 @@ export default function AppointmentsPage() {
                     {appointment.status === "CONFIRMED" && (
                       <>
                         <Link
-                          href={`/consultation/${appointment._id}`}
+                          href={`/consultation?id=${appointment._id}`}
                           className="rounded-lg bg-purple-600 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white hover:bg-purple-700 shadow-sm transition-colors text-center whitespace-nowrap"
                         >
                           💬 Chat
@@ -584,7 +584,7 @@ export default function AppointmentsPage() {
                       <div className="text-center space-y-2 w-full sm:w-auto">
                         <span className="text-xs sm:text-sm font-semibold text-blue-900 block">✓ Completed</span>
                         <Link
-                          href={`/consultation/${appointment._id}`}
+                          href={`/consultation?id=${appointment._id}`}
                           className="block w-full rounded-lg bg-purple-600 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white hover:bg-purple-700 shadow-sm transition-colors"
                         >
                           💬 View Chat

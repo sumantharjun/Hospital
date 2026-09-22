@@ -198,7 +198,7 @@ export default function BookAppointmentPage() {
                   <div
                     key={doctor._id}
                     className="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm hover:shadow-lg transition-shadow cursor-pointer"
-                    onClick={() => router.push(`/appointments/book/${doctor._id}`)}
+                    onClick={() => router.push(`/appointments/book/slot?doctorId=${doctor._id}`)}
                   >
                     <div className="flex items-start justify-between mb-3 sm:mb-4">
                       <div className="flex-1 min-w-0">
@@ -234,7 +234,7 @@ export default function BookAppointmentPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          router.push(`/appointments/book/${doctor._id}`);
+                          router.push(`/appointments/book/slot?doctorId=${doctor._id}`);
                         }}
                         className="rounded-lg bg-blue-900 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white hover:bg-blue-800 shadow-sm whitespace-nowrap flex-shrink-0"
                       >

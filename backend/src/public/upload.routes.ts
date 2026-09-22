@@ -5,23 +5,32 @@ import fs from "fs";
 
 export const router = Router();
 
-// Create uploads directory if it doesn't exist
-const uploadsDir = path.join(process.cwd(), "uploads", "prescriptions");
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+const UPLOAD_ROOT = process.env.UPLOAD_DIR || path.join(process.cwd(), "uploads");
+
+function uploadDirFor(category: string): string {
+  const dir = path.join(UPLOAD_ROOT, category);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  return dir;
 }
 
-// Configure multer for file storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, `prescription-${uniqueSuffix}${ext}`);
-  },
-});
+// Ensure both categories exist up front so static serving never 404s on the dir.
+uploadDirFor("prescriptions");
+uploadDirFor("products");
+
+function storageFor(category: string, prefix: string) {
+  return multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, uploadDirFor(category));
+    },
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      const ext = path.extname(file.originalname);
+      cb(null, `${prefix}-${uniqueSuffix}${ext}`);
+    },
+  });
+}
 
 const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   // Accept images and PDFs
@@ -32,18 +41,24 @@ const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilt
   }
 };
 
-const upload = multer({
-  storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
-  },
+const LIMITS = { fileSize: 5 * 1024 * 1024 }; // 5MB
+
+const uploadPrescription = multer({
+  storage: storageFor("prescriptions", "prescription"),
+  limits: LIMITS,
+  fileFilter,
+});
+
+const uploadProduct = multer({
+  storage: storageFor("products", "product"),
+  limits: LIMITS,
   fileFilter,
 });
 
 /**
  * Upload prescription image/PDF
  */
-router.post("/prescription", upload.single("file"), async (req: Request, res: Response) => {
+router.post("/prescription", uploadPrescription.single("file"), async (req: Request, res: Response) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
@@ -69,7 +84,7 @@ router.post("/prescription", upload.single("file"), async (req: Request, res: Re
 /**
  * Upload product image
  */
-router.post("/product", upload.single("file"), async (req: Request, res: Response) => {
+router.post("/product", uploadProduct.single("file"), async (req: Request, res: Response) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });

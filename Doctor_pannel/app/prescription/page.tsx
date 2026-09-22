@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useParams, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { apiGet, apiPost } from "@/lib/api";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -29,11 +29,10 @@ interface FeeItem {
   amount: number;
 }
 
-export default function PrescriptionPage() {
+function PrescriptionPageContent() {
   const router = useRouter();
-  const params = useParams();
   const searchParams = useSearchParams();
-  const appointmentId = params.id as string;
+  const appointmentId = searchParams.get("id") ?? "";
   const [appointment, setAppointment] = useState<Appointment | null>(null);
   const [items, setItems] = useState<PrescriptionItem[]>([
     { medicineName: "", dosage: "", frequency: "", duration: "" },
@@ -569,7 +568,7 @@ export default function PrescriptionPage() {
 
           <div className="flex gap-4">
             <Link
-              href={`/consultation/${appointmentId}`}
+              href={`/consultation?id=${appointmentId}`}
               className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-3 font-semibold text-gray-700 hover:bg-gray-50 shadow-sm text-center"
             >
               ← Back to Consultation
@@ -585,5 +584,19 @@ export default function PrescriptionPage() {
         </form>
       </div>
     </DashboardLayout>
+  );
+}
+
+export default function PrescriptionPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center text-gray-500">
+          Loading...
+        </div>
+      }
+    >
+      <PrescriptionPageContent />
+    </Suspense>
   );
 }

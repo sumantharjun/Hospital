@@ -8,3 +8,7 @@ build/
 *.log
 .DS_Store
 uploads/
+
+# Next.js static export output (regenerate with scripts/build-panels.sh)
+out/
+dist-upload/

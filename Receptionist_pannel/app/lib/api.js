@@ -2,7 +2,7 @@ function getApiBase() {
   const apiBase = process.env.NEXT_PUBLIC_API_BASE;
   if (!apiBase) {
     if (typeof window !== "undefined") {
-      console.error("NEXT_PUBLIC_API_BASE is not set. Add it to .env.local (e.g. http://localhost:4000)");
+      console.error("NEXT_PUBLIC_API_BASE was not set at build time; API calls will fail.");
     }
     return "";
   }
@@ -31,7 +31,7 @@ export async function apiFetch(url, options = {}) {
 }
 
 export const NETWORK_ERROR_MESSAGE =
-  "Backend unreachable. Set NEXT_PUBLIC_API_BASE in .env.local (e.g. http://localhost:4000) and ensure the backend server is running.";
+  "Unable to reach the server. Check your connection and try again.";
 
 export function getAuthHeaders() {
   if (typeof window === "undefined") return {};

@@ -214,7 +214,7 @@ ${msg.messageType === "AUDIO" ? "[Audio Message]" : ""}
                   <div className="flex gap-2">
                     {selectedConversation.isActive !== false && (
                       <Link
-                        href={`/consultation/${selectedConversation.appointmentId}`}
+                        href={`/consultation?id=${selectedConversation.appointmentId}`}
                         className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 shadow-sm"
                       >
                         💬 Reply / Continue Chat

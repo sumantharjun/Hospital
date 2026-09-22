@@ -13,7 +13,16 @@ import { InventoryItem } from "../src/inventory/inventory.model";
 import { Order } from "../src/order/order.model";
 import { FinanceEntry } from "../src/finance/finance.model";
 
-const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://d:123@cluster0.qv3mrd1.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+function requireMongoUri(): string {
+  const uri = process.env.MONGO_URI;
+  if (!uri) {
+    console.error("MONGO_URI is not set. Export it or add it to backend/.env before seeding.");
+    process.exit(1);
+  }
+  return uri;
+}
+
+const MONGO_URI = requireMongoUri();
 
 async function seedDummyData() {
   try {

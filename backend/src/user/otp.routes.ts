@@ -3,16 +3,13 @@ import jwt from "jsonwebtoken";
 import { User } from "./user.model";
 import { JWT_SECRET } from "../config";
 import { ROLE_PERMISSIONS, PharmacyRole } from "./pharmacyRoles";
+import {
+  OTP_EXPIRES_IN_SECONDS,
+  issueOtp,
+  normalizePhone,
+  verifyOtp,
+} from "../shared/services/otp.service";
 
-// In-memory OTP store: phone -> { otp, expiresAt }
-const otpStore = new Map<string, { otp: string; expiresAt: number }>();
-const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes
-// No SMS service: use fixed OTP for testing only
-const TEST_OTP = "1234";
-const TEST_OTP_ALTS = ["1234", "123456"]; // accept both for verify
-function isTestOtp(otp: string): boolean {
-  return TEST_OTP_ALTS.includes(otp.trim());
-}
 
 /**
  * Send OTP to phone (for pharmacy multi-login)
@@ -23,7 +20,7 @@ export const router = Router();
 router.post("/send", async (req: Request, res: Response) => {
   try {
     const { phone } = req.body;
-    const normalizedPhone = phone ? String(phone).replace(/\D/g, "").slice(-10) : "";
+    const normalizedPhone = normalizePhone(phone);
 
     if (normalizedPhone.length < 10) {
       return res.status(400).json({ message: "Valid 10-digit phone number is required" });
@@ -43,19 +40,20 @@ router.post("/send", async (req: Request, res: Response) => {
       // Don't reveal that phone doesn't exist - still return success for security
       return res.json({
         message: "If this number is registered, you will receive an OTP shortly",
-        expiresIn: OTP_TTL_MS / 1000,
+        expiresIn: OTP_EXPIRES_IN_SECONDS,
       });
     }
 
-    // No SMS service: store fixed test OTP only
-    otpStore.set(normalizedPhone, {
-      otp: TEST_OTP,
-      expiresAt: Date.now() + OTP_TTL_MS,
-    });
+    const issued = await issueOtp(normalizedPhone);
+    if (!issued) {
+      return res.status(503).json({
+        message: "OTP delivery is not available. Please contact your administrator.",
+      });
+    }
 
     res.json({
       message: "If this number is registered, you will receive an OTP shortly",
-      expiresIn: OTP_TTL_MS / 1000,
+      expiresIn: OTP_EXPIRES_IN_SECONDS,
     });
   } catch (error: any) {
     res.status(500).json({ message: error.message || "Failed to send OTP" });
@@ -69,33 +67,15 @@ router.post("/send", async (req: Request, res: Response) => {
 router.post("/verify", async (req: Request, res: Response) => {
   try {
     const { phone, otp } = req.body;
-    const normalizedPhone = phone ? String(phone).replace(/\D/g, "").slice(-10) : "";
+    const normalizedPhone = normalizePhone(phone);
 
-    const otpStr = otp != null ? String(otp).trim() : "";
-    if (normalizedPhone.length < 10 || !otpStr) {
+    if (normalizedPhone.length < 10) {
       return res.status(400).json({ message: "Phone and OTP are required" });
     }
 
-    const stored = otpStore.get(normalizedPhone);
-    let otpValid = false;
-    if (stored) {
-      if (Date.now() > stored.expiresAt) {
-        otpStore.delete(normalizedPhone);
-        return res.status(400).json({ message: "OTP expired. Please request a new one." });
-      }
-      otpValid = stored.otp === otpStr || isTestOtp(otpStr);
-      if (otpValid) otpStore.delete(normalizedPhone);
-    } else if (isTestOtp(otpStr)) {
-      // No stored OTP (e.g. send on another server or user not found on send): allow test OTP if user exists
-      otpValid = true;
-    }
-    if (!otpValid) {
-      if (!stored) {
-        return res.status(400).json({
-          message: "No OTP was sent to this number. Click 'Send OTP' first, or ensure this number is registered as pharmacy staff.",
-        });
-      }
-      return res.status(401).json({ message: "Invalid OTP" });
+    const result = verifyOtp(normalizedPhone, otp);
+    if (!result.ok) {
+      return res.status(result.status).json({ message: result.message });
     }
 
     let user = await User.findOne({

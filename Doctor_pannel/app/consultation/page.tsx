@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useRef, useMemo } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { Suspense, useEffect, useState, useRef, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { apiGet, apiPost, apiPatch, apiDelete } from "@/lib/api";
 import { initializeSocket, getSocket, onSocketEvent, offSocketEvent } from "@/lib/socket";
@@ -63,10 +63,10 @@ interface TranscriptionResult {
   };
 }
 
-export default function ConsultationPage() {
+function ConsultationPageContent() {
   const router = useRouter();
-  const params = useParams();
-  const appointmentId = params.id as string;
+  const searchParams = useSearchParams();
+  const appointmentId = searchParams.get("id") ?? "";
   const [appointment, setAppointment] = useState<Appointment | null>(null);
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [patientRecord, setPatientRecord] = useState<PatientRecord | null>(null);
@@ -631,7 +631,7 @@ export default function ConsultationPage() {
               📋 Ask for Report
             </button>
             <Link
-              href={`/prescription/${appointmentId}${aiSuggestions ? `?suggestions=${encodeURIComponent(JSON.stringify(aiSuggestions))}` : ""}`}
+              href={`/prescription?id=${appointmentId}${aiSuggestions ? `&suggestions=${encodeURIComponent(JSON.stringify(aiSuggestions))}` : ""}`}
               className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-700"
             >
               📝 Generate Prescription
@@ -970,7 +970,7 @@ export default function ConsultationPage() {
                 )}
 
                 <Link
-                  href={`/prescription/${appointmentId}?suggestions=${encodeURIComponent(JSON.stringify(aiSuggestions))}`}
+                  href={`/prescription?id=${appointmentId}&suggestions=${encodeURIComponent(JSON.stringify(aiSuggestions))}`}
                   className="mt-4 block rounded-lg bg-green-600 px-4 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-green-700"
                 >
                   Use for Prescription
@@ -1080,5 +1080,19 @@ export default function ConsultationPage() {
         </div>
       )}
     </DashboardLayout>
+  );
+}
+
+export default function ConsultationPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center text-gray-500">
+          Loading...
+        </div>
+      }
+    >
+      <ConsultationPageContent />
+    </Suspense>
   );
 }

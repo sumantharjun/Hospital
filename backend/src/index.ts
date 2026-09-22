@@ -8,7 +8,7 @@ import path from "path";
 import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
 import { errorHandler } from "./shared/middleware/errorHandler";
-import { MONGO_URI, PORT } from "./config";
+import { MONGO_URI, PORT, isOriginAllowed } from "./config";
 import { audit } from "./shared/middleware/audit";
 import { initializeSocket } from "./socket/socket.server";
 
@@ -19,7 +19,14 @@ app.set("etag", false);
 
 app.use(
   cors({
-    origin: true,
+    // `origin: true` reflected any requesting origin while also allowing
+    // credentials; restrict to the configured panel origins instead.
+    origin: (origin, callback) => {
+      // Signal "not allowed" rather than throwing: cors() then simply omits the
+      // Access-Control-Allow-Origin header, so the browser blocks the response
+      // while the server still returns a normal status instead of a 500.
+      callback(null, isOriginAllowed(origin));
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: [
@@ -48,7 +55,10 @@ app.use(express.json());
 app.use(morgan("dev"));
 app.use(audit);
 
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+// Must match UPLOAD_DIR used by the upload routes so a mounted persistent
+// disk is both written to and served from.
+const UPLOAD_ROOT = process.env.UPLOAD_DIR || path.join(process.cwd(), "uploads");
+app.use("/uploads", express.static(UPLOAD_ROOT));
 
 registerRoutes(app);
 app.use(errorHandler);
