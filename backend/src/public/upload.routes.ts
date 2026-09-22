@@ -5,15 +5,7 @@ import fs from "fs";
 
 export const router = Router();
 
-const UPLOAD_ROOT = process.env.UPLOAD_DIR || path.join(process.cwd(), "uploads");
-
-function uploadDirFor(category: string): string {
-  const dir = path.join(UPLOAD_ROOT, category);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-  return dir;
-}
+import { uploadDir as uploadDirFor } from "../shared/uploads";
 
 // Ensure both categories exist up front so static serving never 404s on the dir.
 uploadDirFor("prescriptions");

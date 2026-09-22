@@ -34,7 +34,11 @@ RUN mkdir -p /data/uploads && chown -R node:node /data/uploads
 USER node
 
 EXPOSE 4000
-VOLUME ["/data/uploads"]
+
+# No VOLUME instruction on purpose: Railway rejects it, and platforms that do
+# support persistent storage (Render, Northflank, Fly, plain Docker) attach the
+# mount at run time anyway. Mount durable storage at UPLOAD_DIR (/data/uploads)
+# or uploaded prescriptions and product images are lost on every restart.
 
 # Socket.IO needs the process itself to receive signals, so exec form is used.
 CMD ["node", "dist/index.js"]

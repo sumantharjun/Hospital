@@ -7,6 +7,7 @@ import { socketEvents } from "../socket/socket.server";
 import { User } from "../user/user.model";
 import { createNotification } from "../notifications/notification.service";
 import multer from "multer";
+import { resolveUploadPath, uploadDir } from "../shared/uploads";
 import path from "path";
 import fs from "fs";
 
@@ -19,13 +20,12 @@ const getReportRequestId = (reportRequest: IReportRequest): string => String(rep
 const getFilePath = (fileUrl: string): string => {
   if (!fileUrl) return "";
   // Remove leading slash and convert URL path to filesystem path
-  const relativePath = fileUrl.startsWith("/") ? fileUrl.slice(1) : fileUrl;
-  return path.join(process.cwd(), relativePath);
+  return resolveUploadPath(fileUrl, "reports");
 };
 
 // Configure multer for file uploads
 const upload = multer({
-  dest: "uploads/reports/",
+  dest: uploadDir("reports"),
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },

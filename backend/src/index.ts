@@ -11,6 +11,7 @@ import { errorHandler } from "./shared/middleware/errorHandler";
 import { MONGO_URI, PORT, isOriginAllowed } from "./config";
 import { audit } from "./shared/middleware/audit";
 import { initializeSocket } from "./socket/socket.server";
+import { UPLOAD_ROOT } from "./shared/uploads";
 
 const app = express();
 const httpServer = createServer(app);
@@ -55,9 +56,8 @@ app.use(express.json());
 app.use(morgan("dev"));
 app.use(audit);
 
-// Must match UPLOAD_DIR used by the upload routes so a mounted persistent
-// disk is both written to and served from.
-const UPLOAD_ROOT = process.env.UPLOAD_DIR || path.join(process.cwd(), "uploads");
+// Serves from the same root every upload route writes to, so a mounted
+// persistent disk is both written to and served from.
 app.use("/uploads", express.static(UPLOAD_ROOT));
 
 registerRoutes(app);

@@ -18,12 +18,13 @@ import { Hospital } from "../master/hospital.model";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { resolveUploadPath, uploadDir } from "../shared/uploads";
 
 export const router = Router();
 
 // Configure multer for file uploads
 const upload = multer({
-  dest: "uploads/reports/",
+  dest: uploadDir("reports"),
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },
@@ -942,9 +943,9 @@ router.get("/:id/report", async (req: Request, res: Response) => {
       filePath = appointment.reportFile;
     } else {
       if (appointment.reportFile.startsWith("/uploads/") || appointment.reportFile.startsWith("uploads/")) {
-        filePath = path.join(process.cwd(), appointment.reportFile.replace(/^\//, ""));
+        filePath = resolveUploadPath(appointment.reportFile, "reports");
       } else {
-        filePath = path.join(process.cwd(), "uploads/reports", path.basename(appointment.reportFile));
+        filePath = resolveUploadPath(path.basename(appointment.reportFile), "reports");
         // Also try the old path format
         if (!fs.existsSync(filePath)) {
           filePath = path.join(__dirname, "../../", appointment.reportFile);
@@ -1058,9 +1059,9 @@ router.delete("/:id", requireAuth, async (req: Request, res: Response) => {
           filePath = reportFile;
         } else {
           if (reportFile.startsWith("/uploads/") || reportFile.startsWith("uploads/")) {
-            filePath = path.join(process.cwd(), reportFile.replace(/^\//, ""));
+            filePath = resolveUploadPath(reportFile, "reports");
           } else {
-            filePath = path.join(process.cwd(), "uploads/reports", path.basename(reportFile));
+            filePath = resolveUploadPath(path.basename(reportFile), "reports");
             if (!fs.existsSync(filePath)) {
               filePath = path.join(__dirname, "../../", reportFile);
             }

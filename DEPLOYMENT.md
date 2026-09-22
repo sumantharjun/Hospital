@@ -55,6 +55,14 @@ nothing. `next build` writes a self-contained `out/` directory per panel.
 
 ## Step 2 — Backend on Render
 
+> **Deploying to Railway instead?** Set **Settings → Source → Root Directory**
+> to `backend`, or Railpack inspects the repo root, finds no `package.json`
+> among the eight panel folders, and fails with *"could not determine how to
+> build the app"*. Attach a Railway Volume mounted at `/data/uploads` and set
+> `UPLOAD_DIR` to match. The Dockerfile deliberately has no `VOLUME`
+> instruction, which Railway rejects.
+
+
 The blueprint is [`render.yaml`](./render.yaml).
 
 1. Push this repo to GitHub.
